@@ -3,70 +3,27 @@ name: Push
 on: push
 
 jobs:
-  buildwebsite:
-    name: Build website
+  buildjbrowseweb-development:
+    name: Build jbrowse-web in development mode
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 2
           persist-credentials: false
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Install website deps (with cache)
-        uses: bahmutov/npm-install@v1
-        with:
-          working-directory: website
-      - name: Build website
+      - name: Get latest release tag
+        id: latest_release
         run: |
-          cd website/
-          yarn build
-          mkdir testing
-          mv build testing/jb2
-      - name: Check website links
-        uses: untitaker/hyperlink@0.1.27
-        with:
-          args: website/testing/ --check-anchors
-
-  buildwholerepo:
-    name: Build whole repo
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Install deps (with cache)
-        uses: bahmutov/npm-install@v1
-      - name: Build codebase
-        run: yarn build
-      - name: Test build
-        run: BUILT_TESTS=1 yarn built-test-ci
-      - name: Test embedded lgv
-        run: |
-          yarn
-          yarn e2e
-        working-directory: component_tests/lgv-vite
-      - name: Test embedded cgv
-        run: |
-          yarn
-          yarn e2e
-        working-directory: component_tests/cgv-vite
-      - name: Test embedded react-app
-        run: |
-          yarn
-          yarn e2e
-        working-directory: component_tests/app-vite
-
-  buildjbrowseweb:
-    name: Deploy jbrowse-web and storybooks to S3
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
+          git remote add GMOD https://github.com/GMOD/jbrowse-components.git || true
+          git fetch --tags GMOD
+          latest_release=$( \
+            git tag --merged HEAD | \
+            grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | \
+            sort -V | \
+            tail -n 1 \
+          )
+          echo "Lastest release: $latest_release"
+          echo "tag=$latest_release" >> $GITHUB_OUTPUT
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -78,95 +35,14 @@ jobs:
           cd products/jbrowse-web/
           NODE_OPTIONS='--max-old-space-size=6500' yarn build
           cd ../../
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Prepare zip file
+        run: |
+          cd products/jbrowse-web/build
+          zip -r "jbrowse-web-${{steps.latest_release.outputs.tag}}.zip" .
+      - uses: softprops/action-gh-release@v2
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-      - name: Copy branch build to S3
-        run: |
-          cd products/jbrowse-web/build && zip -r "jbrowse-web-$(echo ${{github.ref}} | cut -d '/' -f3-).zip" . && cd -
-          cp products/jbrowse-web/build/test_data/config.json products/jbrowse-web/build/config.json
-          aws s3 sync --delete products/jbrowse-web/build s3://jbrowse.org/code/jb2/$(echo ${{github.ref}} | cut -d "/" -f3-)
-          aws cloudfront create-invalidation --distribution-id E13LGELJOT4GQO --paths "/code/jb2/$(echo ${{github.ref}} | cut -d "/" -f3-)/*"
-
-      - name: Build LGV
-        run: |
-          yarn storybook:build
-        working-directory: products/jbrowse-react-linear-genome-view
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      - name: Deploy LGV
-        run: |
-          pwd
-          aws s3 sync --delete storybook-static s3://jbrowse.org/storybook/lgv/$(echo ${{github.ref}} | cut -d "/" -f3-)
-          aws cloudfront create-invalidation --distribution-id E13LGELJOT4GQO --paths "/storybook/lgv/$(echo ${{github.ref}} | cut -d "/" -f3-)/*"
-        working-directory: products/jbrowse-react-linear-genome-view
-
-      - name: Build React App
-        run: |
-          yarn storybook:build
-        working-directory: products/jbrowse-react-app
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-      - name: Deploy React App
-        run: |
-          pwd
-          aws s3 sync --delete storybook-static s3://jbrowse.org/storybook/app/$(echo ${{github.ref}} | cut -d "/" -f3-)
-          aws cloudfront create-invalidation --distribution-id E13LGELJOT4GQO --paths "/storybook/app/$(echo ${{github.ref}} | cut -d "/" -f3-)/*"
-        working-directory: products/jbrowse-react-app
-
-      - name: Build CGV
-        run: |
-          yarn storybook:build
-        working-directory: products/jbrowse-react-circular-genome-view
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-      - name: Deploy CGV
-        run: |
-          pwd
-          aws s3 sync --delete storybook-static s3://jbrowse.org/storybook/cgv/$(echo ${{github.ref}} | cut -d "/" -f3-)
-          aws cloudfront create-invalidation --distribution-id E13LGELJOT4GQO --paths "/storybook/cgv/$(echo ${{github.ref}} | cut -d "/" -f3-)/*"
-        working-directory: products/jbrowse-react-circular-genome-view
-
-  formatchecks:
-    name: Lint, typecheck, test
-    runs-on: ubuntu-latest
-    steps:
-      - run: sudo apt-get -y install tabix
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Install deps and build (with cache)
-        uses: bahmutov/npm-install@v1
-      - name: Check codebase format
-        run: yarn prettier --check .
-      - name: Check autogen docs
-        run: yarn statedocs && yarn configdocs
-      - name: Spellcheck
-        uses: crate-ci/typos@master
-      - name: Lint codebase
-        run: yarn lint
-      - name: Test codebase
-        run: yarn test-ci
-      - name: Upload coverage
-        uses: codecov/codecov-action@v4
-      - name: Typecheck codebase
-        run: yarn typecheck
+          tag_name: ${{steps.latest_release.outputs.tag}}-dev
+          name: Dev Build ${{steps.latest_release.outputs.tag}}
+          files: products/jbrowse-web/build/jbrowse-web-${{steps.latest_release.outputs.tag}}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
