@@ -16,7 +16,6 @@ import {
   InternetAccountsRootModelMixin,
 } from '@jbrowse/product-core'
 import AddIcon from '@mui/icons-material/Add'
-import AppsIcon from '@mui/icons-material/Apps'
 import ExtensionIcon from '@mui/icons-material/Extension'
 import FileCopyIcon from '@mui/icons-material/FileCopy'
 import FolderOpenIcon from '@mui/icons-material/FolderOpen'
@@ -154,6 +153,15 @@ export default function RootModel({
        * #volatile
        */
       error: undefined as unknown,
+      /**
+       * #volatile
+       */
+      reloadPluginManagerCallback: (
+        _configSnapshot: Record<string, unknown>,
+        _sessionSnapshot: Record<string, unknown>,
+      ) => {
+        console.error('reloadPluginManagerCallback unimplemented')
+      },
     }))
 
     .actions(self => ({
@@ -252,11 +260,12 @@ export default function RootModel({
               () => {
                 if (self.session) {
                   const s = self.session as AbstractSessionModel
+                  const sessionSnap = getSnapshot(s)
                   try {
                     sessionStorage.setItem(
                       'current',
                       JSON.stringify({
-                        session: getSnapshot(s),
+                        session: sessionSnap,
                         createdAt: new Date(),
                       }),
                     )
@@ -269,7 +278,10 @@ export default function RootModel({
                     // autorun at current time because it depends on session
                     // storage snapshot being set above
                     if (self.pluginsUpdated) {
-                      window.location.reload()
+                      self.reloadPluginManagerCallback(
+                        structuredClone(getSnapshot(self.jbrowse)),
+                        structuredClone(sessionSnap),
+                      )
                     }
                   } catch (e) {
                     console.error(e)
@@ -296,7 +308,7 @@ export default function RootModel({
       /**
        * #action
        */
-      setSession(sessionSnapshot?: SnapshotIn<BaseSessionType>) {
+      setSession(sessionSnapshot: SnapshotIn<BaseSessionType>) {
         const oldSession = self.session
         self.session = cast(sessionSnapshot)
         if (self.session) {
@@ -316,6 +328,17 @@ export default function RootModel({
        */
       setPluginsUpdated(flag: boolean) {
         self.pluginsUpdated = flag
+      },
+      /**
+       * #action
+       */
+      setReloadPluginManagerCallback(
+        callback: (
+          configSnapshot: Record<string, unknown>,
+          sessionSnapshot: Record<string, unknown>,
+        ) => void,
+      ) {
+        self.reloadPluginManagerCallback = callback
       },
       /**
        * #action
@@ -584,14 +607,6 @@ export default function RootModel({
                       'addConnectionWidget',
                     ),
                   )
-                },
-              },
-              { type: 'divider' },
-              {
-                label: 'Return to splash screen',
-                icon: AppsIcon,
-                onClick: () => {
-                  self.setSession(undefined)
                 },
               },
             ],
