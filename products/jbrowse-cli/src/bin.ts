@@ -1,3 +1,7 @@
 #!/usr/bin/env node
 
-require('./index.ts').main(process.argv.slice(2))
+import { main } from './index'
+
+main(process.argv.slice(2)).catch((e: unknown) => {
+  console.error(e)
+})
