@@ -40,9 +40,11 @@ const FilterByTagDialog = lazy(
 )
 const ColorByTagDialog = lazy(() => import('./components/ColorByTagDialog'))
 const SetFeatureHeightDialog = lazy(
-  () => import('./components/SetFeatureHeightDialog'),
+  () => import('../shared/components/SetFeatureHeightDialog'),
 )
-const SetMaxHeightDialog = lazy(() => import('./components/SetMaxHeightDialog'))
+const SetMaxHeightDialog = lazy(
+  () => import('../shared/components/SetMaxHeightDialog'),
+)
 
 // using a map because it preserves order
 const rendererTypes = new Map([
@@ -681,10 +683,10 @@ export function SharedLinearPileupDisplayMixin(
                     },
                   )) as { feature: SimpleFeatureSerialized | undefined }
 
-                  // check featureIdUnderMouse is still the same as the
-                  // feature.id that was returned e.g. that the user hasn't
-                  // moused over to a new position during the async operation
-                  // above
+                  // check featureIdUnderMouse is still the same
+                  // as the feature.id that was returned e.g. that
+                  // the user hasn't moused over to a new position
+                  // during the async operation above
                   if (
                     isAlive(self) &&
                     feature &&

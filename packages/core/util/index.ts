@@ -845,28 +845,27 @@ export const complementTable = {
 } as Record<string, string>
 
 export function revcom(str: string) {
-  let revcomped = ''
+  const revcomped = []
   for (let i = str.length - 1; i >= 0; i--) {
-    revcomped += complementTable[str[i]!] ?? str[i]
+    revcomped.push(complementTable[str[i]!] ?? str[i])
   }
-  return revcomped
+  return revcomped.join('')
 }
 
 export function reverse(str: string) {
-  let reversed = ''
+  const reversed = []
   for (let i = str.length - 1; i >= 0; i--) {
-    reversed += str[i]!
+    reversed.push(str[i]!)
   }
-  return reversed
+  return reversed.join('')
 }
 
 export function complement(str: string) {
-  let comp = ''
-
-  for (const element of str) {
-    comp += complementTable[element] ?? element
+  const comp = []
+  for (let i = 0, l = str.length; i < l; i++) {
+    comp.push(complementTable[str[i]!] ?? str[i]!)
   }
-  return comp
+  return comp.join('')
 }
 
 // requires immediate execution in jest environment, because (hypothesis) it

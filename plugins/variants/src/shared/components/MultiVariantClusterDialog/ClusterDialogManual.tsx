@@ -104,7 +104,7 @@ const ClusterDialogManuals = observer(function ({
   }, [model])
 
   const results = ret
-    ? `inputMatrix<-matrix(c(${Object.values(ret)
+    ? String.raw`inputMatrix<-matrix(c(${Object.values(ret)
         .map(val => val.join(','))
         .join(',\n')}
 ),nrow=${Object.values(ret).length},byrow=TRUE)
@@ -112,7 +112,7 @@ rownames(inputMatrix)<-c(${Object.keys(ret)
         .map(key => `'${key}'`)
         .join(',')})
 resultClusters<-hclust(dist(inputMatrix), method='${clusterMethod}')
-cat(resultClusters$order,sep='\\n')`
+cat(resultClusters$order,sep='\n')`
     : undefined
 
   const resultsTsv = ret
@@ -213,7 +213,7 @@ cat(resultClusters$order,sep='\\n')`
             ) : loading ? (
               <LoadingEllipses
                 variant="h6"
-                title="Generating genotype matrix"
+                message="Generating genotype matrix"
               />
             ) : error ? (
               <ErrorMessage error={error} />

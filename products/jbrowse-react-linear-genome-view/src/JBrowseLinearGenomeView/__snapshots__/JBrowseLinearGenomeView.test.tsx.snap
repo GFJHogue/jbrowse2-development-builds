@@ -254,7 +254,7 @@ exports[`<JBrowseLinearGenomeView /> renders successfully 1`] = `
                               autocapitalize="none"
                               autocomplete="off"
                               class="MuiInputBase-input MuiOutlinedInput-input MuiInputBase-inputSizeSmall MuiInputBase-inputAdornedEnd MuiAutocomplete-input MuiAutocomplete-inputFocused css-13meb6w-MuiInputBase-input-MuiOutlinedInput-input"
-                              id="«r8»"
+                              id="_r_8_"
                               placeholder="Search for location"
                               role="combobox"
                               spellcheck="false"
@@ -7598,7 +7598,7 @@ exports[`<JBrowseLinearGenomeView /> renders successfully 1`] = `
                   </div>
                 </div>
                 <div
-                  class="css-r2p1jw-horizontalHandle-resizeHandle"
+                  class="css-120n0lh-horizontalHandle-resizeHandle"
                   data-resizer="true"
                 />
               </div>

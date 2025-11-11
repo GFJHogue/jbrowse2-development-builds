@@ -25,6 +25,7 @@ import { isAlive } from 'mobx-state-tree'
 import { makeStyles } from 'tss-react/mui'
 
 import type { ReducedModel } from './types'
+import type { Source } from '../../../util'
 import type { LinearGenomeViewModel } from '@jbrowse/plugin-linear-genome-view'
 
 const useStyles = makeStyles()(theme => ({
@@ -97,7 +98,7 @@ const WiggleClusterDialogManuals = observer(function ({
   }, [model, samplesPerPixel])
 
   const results = ret
-    ? `inputMatrix<-matrix(c(${Object.values(ret)
+    ? String.raw`inputMatrix<-matrix(c(${Object.values(ret)
         .map(val => val.join(','))
         .join(',\n')}
 ),nrow=${Object.values(ret).length},byrow=TRUE)
@@ -105,7 +106,7 @@ rownames(inputMatrix)<-c(${Object.keys(ret)
         .map(key => `'${key}'`)
         .join(',')})
 resultClusters<-hclust(dist(inputMatrix), method='${clusterMethod}')
-cat(resultClusters$order,sep='\\n')`
+cat(resultClusters$order,sep='\n')`
     : undefined
 
   const resultsTsv = ret
@@ -219,7 +220,7 @@ cat(resultClusters$order,sep='\\n')`
             {results ? (
               <div />
             ) : loading ? (
-              <LoadingEllipses variant="h6" title="Generating score matrix" />
+              <LoadingEllipses variant="h6" message="Generating score matrix" />
             ) : error ? (
               <ErrorMessage error={error} />
             ) : null}
@@ -261,6 +262,14 @@ cat(resultClusters$order,sep='\\n')`
             const { sourcesWithoutLayout } = model
             if (sourcesWithoutLayout) {
               try {
+                // Preserve color and other layout customizations
+                const currentLayout = model.layout?.length
+                  ? model.layout
+                  : sourcesWithoutLayout
+                const sourcesByName = Object.fromEntries(
+                  currentLayout.map((s: Source) => [s.name, s]),
+                )
+
                 model.setLayout(
                   paste
                     .split('\n')
@@ -268,11 +277,15 @@ cat(resultClusters$order,sep='\\n')`
                     .filter(f => !!f)
                     .map(r => +r)
                     .map(idx => {
-                      const ret = sourcesWithoutLayout[idx - 1]
-                      if (!ret) {
+                      const sourceItem = sourcesWithoutLayout[idx - 1]
+                      if (!sourceItem) {
                         throw new Error(`out of bounds at ${idx}`)
                       }
-                      return ret
+                      // Preserve customizations from current layout
+                      return {
+                        ...sourceItem,
+                        ...sourcesByName[sourceItem.name],
+                      }
                     }),
                 )
               } catch (e) {
