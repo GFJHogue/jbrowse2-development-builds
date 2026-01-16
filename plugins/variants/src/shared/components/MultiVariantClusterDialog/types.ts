@@ -1,4 +1,4 @@
-import type { Source } from '../../types'
+import type { Source } from '../../types.ts'
 import type { AnyConfigurationModel } from '@jbrowse/core/configuration'
 
 export interface ReducedModel {
@@ -6,6 +6,7 @@ export interface ReducedModel {
   minorAlleleFrequencyFilter?: number
   lengthCutoffFilter: number
   adapterConfig: AnyConfigurationModel
-  setLayout: (arg: Source[]) => void
+  setClusterTree: (arg?: string) => void
+  setLayout: (arg: Source[], clearTree?: boolean) => void
   clearLayout: () => void
 }

@@ -6,15 +6,19 @@ import {
   makeAbortableReaction,
 } from '@jbrowse/core/util'
 import { getParentRenderProps } from '@jbrowse/core/util/tracks'
-import { types } from 'mobx-state-tree'
+import { types } from '@jbrowse/mobx-state-tree'
 
-import ServerSideRenderedBlockContent from '../ServerSideRenderedBlockContent'
-import { renderBlockData, renderBlockEffect } from './renderDotplotBlock'
+import ServerSideRenderedBlockContent from '../ServerSideRenderedBlockContent.tsx'
+import { renderBlockData, renderBlockEffect } from './renderDotplotBlock.ts'
 
-import type { DotplotViewModel, ExportSvgOptions } from '../DotplotView/model'
+import type {
+  DotplotViewModel,
+  ExportSvgOptions,
+} from '../DotplotView/model.ts'
 import type { AnyConfigurationSchemaType } from '@jbrowse/core/configuration'
+import type { StopToken } from '@jbrowse/core/util/stopToken'
+import type { Instance } from '@jbrowse/mobx-state-tree'
 import type { ThemeOptions } from '@mui/material'
-import type { Instance } from 'mobx-state-tree'
 
 /**
  * #stateModel DotplotDisplay
@@ -45,7 +49,7 @@ export function stateModelFactory(configSchema: AnyConfigurationSchemaType) {
           /**
            * #volatile
            */
-          stopToken: undefined as string | undefined,
+          stopToken: undefined as StopToken | undefined,
           /**
            * #volatile
            */
@@ -108,11 +112,7 @@ export function stateModelFactory(configSchema: AnyConfigurationSchemaType) {
         return {
           ...getParentRenderProps(self),
           rpcDriverName: self.rpcDriverName,
-          displayModel: self,
           config: self.configuration.renderer,
-          statusCallback: (message: string) => {
-            self.setMessage(message)
-          },
         }
       },
     }))
@@ -126,9 +126,10 @@ export function stateModelFactory(configSchema: AnyConfigurationSchemaType) {
           return null
         }
 
-        const { rendererType, rpcManager, renderProps } = props
+        const { rendererType, rpcManager, renderProps, renderingProps } = props
         const rendering = await rendererType.renderInClient(rpcManager, {
           ...renderProps,
+          renderingProps,
           exportSVG: opts,
           theme: opts.theme || renderProps.theme,
         })
@@ -161,7 +162,7 @@ export function stateModelFactory(configSchema: AnyConfigurationSchemaType) {
       /**
        * #action
        */
-      setLoading(stopToken?: string) {
+      setLoading(stopToken?: StopToken) {
         self.filled = false
         self.message = undefined
         self.reactElement = undefined
@@ -174,13 +175,7 @@ export function stateModelFactory(configSchema: AnyConfigurationSchemaType) {
        * #action
        */
       setMessage(messageText: string) {
-        self.filled = false
         self.message = messageText
-        self.reactElement = undefined
-        self.data = undefined
-        self.error = undefined
-        self.renderingComponent = undefined
-        self.stopToken = undefined
       },
       /**
        * #action

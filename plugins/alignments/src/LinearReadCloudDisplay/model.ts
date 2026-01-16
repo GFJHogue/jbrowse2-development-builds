@@ -9,28 +9,39 @@ import {
   getSession,
   isSessionModelWithWidgets,
 } from '@jbrowse/core/util'
+import { types } from '@jbrowse/mobx-state-tree'
 import {
   FeatureDensityMixin,
   TrackHeightMixin,
 } from '@jbrowse/plugin-linear-genome-view'
-import { types } from 'mobx-state-tree'
+import VisibilityIcon from '@mui/icons-material/Visibility'
 
-import { LinearReadDisplayBaseMixin } from '../shared/LinearReadDisplayBaseMixin'
-import { LinearReadDisplayWithLayoutMixin } from '../shared/LinearReadDisplayWithLayoutMixin'
-import { LinearReadDisplayWithPairFiltersMixin } from '../shared/LinearReadDisplayWithPairFiltersMixin'
-import { chainToSimpleFeature } from '../shared/chainToSimpleFeature'
+import { chainToSimpleFeature } from '../LinearReadArcsDisplay/chainToSimpleFeature.ts'
+import { calculateCloudTicks } from '../RenderLinearReadCloudDisplayRPC/drawFeatsCloud.ts'
+import { LinearReadDisplayBaseMixin } from '../shared/LinearReadDisplayBaseMixin.ts'
+import { LinearReadDisplayWithLayoutMixin } from '../shared/LinearReadDisplayWithLayoutMixin.ts'
+import { LinearReadDisplayWithPairFiltersMixin } from '../shared/LinearReadDisplayWithPairFiltersMixin.ts'
+import { SharedModificationsMixin } from '../shared/SharedModificationsMixin.ts'
+import {
+  calculateSvgLegendWidth,
+  getReadDisplayLegendItems,
+} from '../shared/legendUtils.ts'
 import {
   getColorSchemeMenuItem,
-  getFilterByMenuItem,
-} from '../shared/menuItems'
+  getEditFiltersMenuItem,
+  getMismatchDisplayMenuItem,
+} from '../shared/menuItems.ts'
 
-import type { ReducedFeature } from '../shared/fetchChains'
+import type { ReducedFeature } from '../shared/types.ts'
 import type { AnyConfigurationSchemaType } from '@jbrowse/core/configuration'
-import type { Instance } from 'mobx-state-tree'
+import type { Instance } from '@jbrowse/mobx-state-tree'
+import type {
+  ExportSvgDisplayOptions,
+  LegendItem,
+} from '@jbrowse/plugin-linear-genome-view'
 
-// async
 const SetFeatureHeightDialog = lazy(
-  () => import('./components/SetFeatureHeightDialog'),
+  () => import('./components/SetFeatureHeightDialog.tsx'),
 )
 
 /**
@@ -51,6 +62,7 @@ function stateModelFactory(configSchema: AnyConfigurationSchemaType) {
       LinearReadDisplayBaseMixin(),
       LinearReadDisplayWithLayoutMixin(),
       LinearReadDisplayWithPairFiltersMixin(),
+      SharedModificationsMixin(),
       types.model({
         /**
          * #property
@@ -77,6 +89,36 @@ function stateModelFactory(configSchema: AnyConfigurationSchemaType) {
          * Maximum height for the layout (prevents infinite stacking)
          */
         trackMaxHeight: types.maybe(types.number),
+
+        /**
+         * #property
+         */
+        hideSmallIndelsSetting: types.maybe(types.boolean),
+
+        /**
+         * #property
+         */
+        hideMismatchesSetting: types.maybe(types.boolean),
+
+        /**
+         * #property
+         */
+        hideLargeIndelsSetting: types.maybe(types.boolean),
+
+        /**
+         * #property
+         */
+        showLegend: types.maybe(types.boolean),
+
+        /**
+         * #property
+         */
+        showYScalebar: types.optional(types.boolean, true),
+
+        /**
+         * #property
+         */
+        showOutline: types.optional(types.boolean, true),
       }),
     )
     .volatile(() => ({
@@ -85,19 +127,45 @@ function stateModelFactory(configSchema: AnyConfigurationSchemaType) {
        * Current height of the layout after drawing
        */
       layoutHeight: 0,
+      /**
+       * #volatile
+       * Chain ID of the currently selected feature for persistent highlighting
+       */
+      selectedFeatureId: undefined as string | undefined,
+      /**
+       * #volatile
+       * Max distance for cloud mode scale (min is always 1 for log scale)
+       */
+      cloudMaxDistance: undefined as number | undefined,
     }))
     .views(self => ({
       /**
        * #getter
+       * Get the color settings (from override or configuration)
        */
       get colorBy() {
         return self.colorBySetting ?? getConf(self, 'colorBy')
       },
       /**
        * #getter
+       * Get the filter settings (from override or configuration)
        */
       get filterBy() {
         return self.filterBySetting ?? getConf(self, 'filterBy')
+      },
+    }))
+    .actions(self => ({
+      /**
+       * #action
+       * Reload the display (clears error state)
+       */
+      reload() {
+        self.error = undefined
+      },
+    }))
+    .views(self => ({
+      get dataTestId() {
+        return self.drawCloud ? 'cloud-canvas' : 'stack-canvas'
       },
       /**
        * #getter
@@ -105,14 +173,57 @@ function stateModelFactory(configSchema: AnyConfigurationSchemaType) {
       get featureHeightSetting() {
         return self.featureHeight ?? getConf(self, 'featureHeight')
       },
+      /**
+       * #getter
+       */
+      get hideSmallIndels() {
+        return self.hideSmallIndelsSetting ?? getConf(self, 'hideSmallIndels')
+      },
+      /**
+       * #getter
+       */
+      get hideMismatches() {
+        return self.hideMismatchesSetting ?? getConf(self, 'hideMismatches')
+      },
+      /**
+       * #getter
+       */
+      get hideLargeIndels() {
+        return self.hideLargeIndelsSetting ?? getConf(self, 'hideLargeIndels')
+      },
+    }))
+    .views(self => ({
+      /**
+       * #getter
+       */
+      get modificationThreshold() {
+        return self.colorBy?.modifications?.threshold ?? 10
+      },
+      /**
+       * #getter
+       * Domain for cloud mode scale: [1, maxDistance]
+       * Uses 1 as lower bound since it's a log scale
+       */
+      get cloudDomain(): [number, number] | undefined {
+        if (self.cloudMaxDistance === undefined) {
+          return undefined
+        }
+        return [1, self.cloudMaxDistance]
+      },
+    }))
+    .views(self => ({
+      /**
+       * #getter
+       * Calculate ticks for the y-axis scalebar in cloud mode
+       */
+      get cloudTicks() {
+        if (!self.drawCloud || !self.cloudDomain || !self.showYScalebar) {
+          return undefined
+        }
+        return calculateCloudTicks(self.cloudDomain, self.height)
+      },
     }))
     .actions(self => ({
-      /**
-       * #action
-       */
-      reload() {
-        self.error = undefined
-      },
       /**
        * #action
        * Set whether to remove spacing between features
@@ -136,14 +247,40 @@ function stateModelFactory(configSchema: AnyConfigurationSchemaType) {
       },
       /**
        * #action
+       * Set the max distance for cloud mode scale
+       * Only updates if value differs by more than EPSILON to avoid infinite re-renders
+       */
+      setCloudMaxDistance(maxDistance: number) {
+        const EPSILON = 0.000001
+        if (
+          self.cloudMaxDistance === undefined ||
+          Math.abs(self.cloudMaxDistance - maxDistance) > EPSILON
+        ) {
+          self.cloudMaxDistance = maxDistance
+        }
+      },
+      /**
+       * #action
+       */
+      setShowYScalebar(show: boolean) {
+        self.showYScalebar = show
+      },
+      /**
+       * #action
+       */
+      setShowOutline(show: boolean) {
+        self.showOutline = show
+      },
+      /**
+       * #action
        */
       selectFeature(chain: ReducedFeature[]) {
         const session = getSession(self)
         const syntheticFeature = chainToSimpleFeature(chain)
         if (isSessionModelWithWidgets(session)) {
           const featureWidget = session.addWidget(
-            'AlignmentsFeatureWidget',
-            'alignmentFeature',
+            'BaseFeatureWidget',
+            'baseFeature',
             {
               featureData: syntheticFeature.toJSON(),
               view: getContainingView(self),
@@ -160,6 +297,59 @@ function stateModelFactory(configSchema: AnyConfigurationSchemaType) {
       setDrawCloud(b: boolean) {
         self.drawCloud = b
       },
+      /**
+       * #action
+       * Set the ID of the selected feature for persistent highlighting
+       */
+      setSelectedFeatureId(id: string | undefined) {
+        self.selectedFeatureId = id
+      },
+      /**
+       * #action
+       */
+      setHideSmallIndels(arg: boolean) {
+        self.hideSmallIndelsSetting = arg
+      },
+      /**
+       * #action
+       */
+      setHideMismatches(arg: boolean) {
+        self.hideMismatchesSetting = arg
+      },
+      /**
+       * #action
+       */
+      setHideLargeIndels(arg: boolean) {
+        self.hideLargeIndelsSetting = arg
+      },
+
+      /**
+       * #action
+       */
+      setShowLegend(s: boolean) {
+        self.showLegend = s
+      },
+    }))
+    .views(self => ({
+      /**
+       * #method
+       * Returns legend items based on current colorBy setting
+       */
+      legendItems(): LegendItem[] {
+        return getReadDisplayLegendItems(
+          self.colorBy,
+          self.visibleModifications,
+        )
+      },
+
+      /**
+       * #method
+       * Returns the width needed for the SVG legend if showLegend is enabled.
+       * Used by SVG export to add extra width for the legend area.
+       */
+      svgLegendWidth(): number {
+        return self.showLegend ? calculateSvgLegendWidth(this.legendItems()) : 0
+      },
     }))
     .views(self => {
       const {
@@ -168,15 +358,32 @@ function stateModelFactory(configSchema: AnyConfigurationSchemaType) {
       } = self
 
       return {
-        // we don't use a server side renderer, so this fills in minimal
-        // info so as not to crash
+        /**
+         * #method
+         */
         renderProps() {
           return {
             ...superRenderProps(),
-            notReady: !self.chainData,
+            notReady: false,
+            filterBy: self.filterBy,
+            colorBy: self.colorBy,
+            featureHeight: self.featureHeightSetting,
+            noSpacing: self.noSpacing ?? false,
+            drawCloud: self.drawCloud,
+            drawSingletons: self.drawSingletons,
+            drawProperPairs: self.drawProperPairs,
+            flipStrandLongReadChains: self.flipStrandLongReadChains,
+            trackMaxHeight: self.trackMaxHeight,
+            hideSmallIndels: self.hideSmallIndels,
+            hideMismatches: self.hideMismatches,
+            hideLargeIndels: self.hideLargeIndels,
+            showOutline: self.showOutline,
+            cloudDomain: self.cloudDomain,
+            visibleModifications: Object.fromEntries(
+              self.visibleModifications.toJSON(),
+            ),
           }
         },
-
         /**
          * #method
          */
@@ -188,6 +395,9 @@ function stateModelFactory(configSchema: AnyConfigurationSchemaType) {
               subMenu: [
                 {
                   label: 'Normal',
+                  type: 'radio',
+                  checked:
+                    self.featureHeightSetting === 7 && self.noSpacing !== true,
                   onClick: () => {
                     self.setFeatureHeight(7)
                     self.setNoSpacing(false)
@@ -195,8 +405,21 @@ function stateModelFactory(configSchema: AnyConfigurationSchemaType) {
                 },
                 {
                   label: 'Compact',
+                  type: 'radio',
+                  checked:
+                    self.featureHeightSetting === 3 && self.noSpacing === true,
                   onClick: () => {
                     self.setFeatureHeight(3)
+                    self.setNoSpacing(true)
+                  },
+                },
+                {
+                  label: 'Super-compact',
+                  type: 'radio',
+                  checked:
+                    self.featureHeightSetting === 1 && self.noSpacing === true,
+                  onClick: () => {
+                    self.setFeatureHeight(1)
                     self.setNoSpacing(true)
                   },
                 },
@@ -215,39 +438,64 @@ function stateModelFactory(configSchema: AnyConfigurationSchemaType) {
               ],
             },
             {
-              label: 'Toggle read cloud (y-coordinate proportional to TLEN)',
-              type: 'checkbox',
-              checked: self.drawCloud,
-              onClick: () => {
-                self.setDrawCloud(!self.drawCloud)
-              },
+              label: 'Show...',
+              icon: VisibilityIcon,
+              type: 'subMenu',
+              subMenu: [
+                {
+                  label: 'Show legend',
+                  type: 'checkbox',
+                  checked: self.showLegend,
+                  onClick: () => {
+                    self.setShowLegend(!self.showLegend)
+                  },
+                },
+                {
+                  label: "Show as 'read cloud' (paired-end reads)",
+                  type: 'checkbox',
+                  helpText:
+                    'In read cloud mode, the y-coordinate of paired-end reads is proportional to insert size (TLEN). This mode is designed for paired-end short reads; long reads will appear at y=0.',
+                  checked: self.drawCloud,
+                  onClick: () => {
+                    self.setDrawCloud(!self.drawCloud)
+                  },
+                },
+                {
+                  label: 'Show y-scalebar',
+                  type: 'checkbox',
+                  helpText:
+                    'Show insert size scale on the y-axis (only visible in cloud mode)',
+                  checked: self.showYScalebar,
+                  onClick: () => {
+                    self.setShowYScalebar(!self.showYScalebar)
+                  },
+                },
+                {
+                  label: 'Show read strand relative to primary',
+                  helpText:
+                    'This makes all the reads draw their strand relative to the primary alignment, which can be helpful in seeing patterns of flipping orientation in split long-read alignments',
+                  type: 'checkbox',
+                  checked: self.flipStrandLongReadChains,
+                  onClick: () => {
+                    self.setFlipStrandLongReadChains(
+                      !self.flipStrandLongReadChains,
+                    )
+                  },
+                },
+                {
+                  label: 'Show outline',
+                  helpText: 'Draw an outline around each read',
+                  type: 'checkbox',
+                  checked: self.showOutline,
+                  onClick: () => {
+                    self.setShowOutline(!self.showOutline)
+                  },
+                },
+                getMismatchDisplayMenuItem(self),
+              ],
             },
-            {
-              label: 'Draw singletons',
-              type: 'checkbox',
-              checked: self.drawSingletons,
-              onClick: () => {
-                self.setDrawSingletons(!self.drawSingletons)
-              },
-            },
-            {
-              label: 'Draw proper pairs',
-              type: 'checkbox',
-              checked: self.drawProperPairs,
-              onClick: () => {
-                self.setDrawProperPairs(!self.drawProperPairs)
-              },
-            },
-            {
-              label:
-                'Flip strand relative to primary alignment for long read chains',
-              type: 'checkbox',
-              checked: self.flipStrandLongReadChains,
-              onClick: () => {
-                self.setFlipStrandLongReadChains(!self.flipStrandLongReadChains)
-              },
-            },
-            getFilterByMenuItem(self),
+
+            getEditFiltersMenuItem(self),
             getColorSchemeMenuItem(self),
           ]
         },
@@ -255,25 +503,11 @@ function stateModelFactory(configSchema: AnyConfigurationSchemaType) {
         /**
          * #method
          */
-        async renderSvg(opts: {
-          rasterizeLayers?: boolean
-        }): Promise<React.ReactNode> {
-          const { renderSvg } = await import('../shared/renderSvgUtil')
-          if (self.drawCloud) {
-            const { drawFeats } = await import('./drawFeatsCloud')
-            return renderSvg(
-              self as LinearReadCloudDisplayModel,
-              opts,
-              drawFeats,
-            )
-          } else {
-            const { drawFeats } = await import('./drawFeatsStack')
-            return renderSvg(
-              self as LinearReadCloudDisplayModel,
-              opts,
-              drawFeats,
-            )
-          }
+        async renderSvg(
+          opts: ExportSvgDisplayOptions,
+        ): Promise<React.ReactNode> {
+          const { renderSvg } = await import('./renderSvg.tsx')
+          return renderSvg(self as LinearReadCloudDisplayModel, opts)
         },
       }
     })
@@ -282,9 +516,8 @@ function stateModelFactory(configSchema: AnyConfigurationSchemaType) {
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         ;(async () => {
           try {
-            const { doAfterAttach } = await import('../shared/afterAttach')
-            const { drawFeats } = await import('./drawFeatsAbstract')
-            doAfterAttach(self, drawFeats)
+            const { doAfterAttachRPC } = await import('./afterAttachRPC.tsx')
+            doAfterAttachRPC(self)
           } catch (e) {
             console.error(e)
             self.setError(e)
@@ -292,6 +525,40 @@ function stateModelFactory(configSchema: AnyConfigurationSchemaType) {
         })()
       },
     }))
+    .postProcessSnapshot(snap => {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      if (!snap) {
+        return snap
+      }
+      const {
+        drawCloud,
+        noSpacing,
+        trackMaxHeight,
+        showLegend,
+        showOutline,
+        hideSmallIndelsSetting,
+        hideMismatchesSetting,
+        hideLargeIndelsSetting,
+        ...rest
+      } = snap as Omit<typeof snap, symbol>
+      return {
+        ...rest,
+        ...(drawCloud ? { drawCloud } : {}),
+        ...(noSpacing !== undefined ? { noSpacing } : {}),
+        ...(trackMaxHeight !== undefined ? { trackMaxHeight } : {}),
+        ...(showLegend !== undefined ? { showLegend } : {}),
+        ...(!showOutline ? { showOutline } : {}),
+        ...(hideSmallIndelsSetting !== undefined
+          ? { hideSmallIndelsSetting }
+          : {}),
+        ...(hideMismatchesSetting !== undefined
+          ? { hideMismatchesSetting }
+          : {}),
+        ...(hideLargeIndelsSetting !== undefined
+          ? { hideLargeIndelsSetting }
+          : {}),
+      } as typeof snap
+    })
 }
 
 export type LinearReadCloudDisplayStateModel = ReturnType<

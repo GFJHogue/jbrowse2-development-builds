@@ -1,10 +1,10 @@
 import { Menu } from '@jbrowse/core/ui'
 import { observer } from 'mobx-react'
 
-import type { Coord } from './types'
-import type { BaseLinearDisplayModel } from '../model'
+import type { Coord } from './types.ts'
+import type { BaseLinearDisplayModel } from '../model.ts'
 
-const MenuPage = observer(function ({
+const MenuPage = observer(function MenuPage({
   onClose,
   contextCoord,
   model,

@@ -9,6 +9,7 @@ import {
 } from '@jbrowse/core/util'
 import { createStopToken, stopStopToken } from '@jbrowse/core/util/stopToken'
 import { getRpcSessionId } from '@jbrowse/core/util/tracks'
+import { isAlive } from '@jbrowse/mobx-state-tree'
 import {
   Button,
   DialogActions,
@@ -17,13 +18,13 @@ import {
   Typography,
 } from '@mui/material'
 import { observer } from 'mobx-react'
-import { isAlive } from 'mobx-state-tree'
 
-import type { ReducedModel } from './types'
-import type { Source } from '../../../util'
+import type { ReducedModel } from './types.ts'
+import type { Source } from '../../../util.ts'
+import type { StopToken } from '@jbrowse/core/util/stopToken'
 import type { LinearGenomeViewModel } from '@jbrowse/plugin-linear-genome-view'
 
-const WiggleClusterDialogAuto = observer(function ({
+const WiggleClusterDialogAuto = observer(function WiggleClusterDialogAuto({
   model,
   children,
   handleClose,
@@ -35,7 +36,7 @@ const WiggleClusterDialogAuto = observer(function ({
   const [progress, setProgress] = useState('')
   const [error, setError] = useState<unknown>()
   const [loading, setLoading] = useState(false)
-  const [stopToken, setStopToken] = useState('')
+  const [stopToken, setStopToken] = useState<StopToken>()
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [samplesPerPixel, setSamplesPerPixel] = useLocalStorage(
     'cluster-samplesPerPixel',

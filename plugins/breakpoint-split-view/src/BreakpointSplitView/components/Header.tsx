@@ -1,15 +1,15 @@
 import { useState } from 'react'
 
 import CascadingMenuButton from '@jbrowse/core/ui/CascadingMenuButton'
+import { makeStyles } from '@jbrowse/core/util/tss-react'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import SearchIcon from '@mui/icons-material/Search'
 import { FormGroup } from '@mui/material'
 import { observer } from 'mobx-react'
-import { makeStyles } from 'tss-react/mui'
 
-import HeaderSearchBoxes from './HeaderSearchBoxes'
+import HeaderSearchBoxes from './HeaderSearchBoxes.tsx'
 
-import type { BreakpointViewModel } from '../model'
+import type { BreakpointViewModel } from '../model.ts'
 
 const useStyles = makeStyles()({
   inline: {
@@ -17,14 +17,18 @@ const useStyles = makeStyles()({
   },
 })
 
-const Header = observer(function ({ model }: { model: BreakpointViewModel }) {
+const Header = observer(function Header({
+  model,
+}: {
+  model: BreakpointViewModel
+}) {
   const { classes } = useStyles()
   const { views } = model
   const [showSearchBoxes, setShowSearchBoxes] = useState(views.length <= 3)
   const [sideBySide, setSideBySide] = useState(views.length <= 3)
   return (
     <FormGroup row>
-      <CascadingMenuButton menuItems={model.menuItems()}>
+      <CascadingMenuButton menuItems={() => model.menuItems()}>
         <MoreVertIcon />
       </CascadingMenuButton>
       <CascadingMenuButton

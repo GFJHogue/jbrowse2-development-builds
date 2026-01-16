@@ -1,14 +1,16 @@
 import { Suspense, useRef, useState } from 'react'
 
 import { getConf } from '@jbrowse/core/configuration'
+import { makeStyles } from '@jbrowse/core/util/tss-react'
+import { useTheme } from '@mui/material'
 import { observer } from 'mobx-react'
-import { makeStyles } from 'tss-react/mui'
 
-import LinearBlocks from './LinearBlocks'
-import MenuPage from './MenuPage'
+import FloatingLegend from './FloatingLegend.tsx'
+import LinearBlocks from './LinearBlocks.tsx'
+import MenuPage from './MenuPage.tsx'
 
-import type { Coord } from './types'
-import type { BaseLinearDisplayModel } from '../model'
+import type { Coord } from './types.ts'
+import type { BaseLinearDisplayModel } from '../model.ts'
 
 const useStyles = makeStyles()({
   display: {
@@ -20,7 +22,7 @@ const useStyles = makeStyles()({
   },
 })
 
-const BaseLinearDisplay = observer(function (props: {
+const BaseLinearDisplay = observer(function BaseLinearDisplay(props: {
   model: BaseLinearDisplayModel
   children?: React.ReactNode
 }) {
@@ -31,7 +33,15 @@ const BaseLinearDisplay = observer(function (props: {
   const [clientMouseCoord, setClientMouseCoord] = useState<Coord>([0, 0])
   const [contextCoord, setContextCoord] = useState<Coord>()
   const { model, children } = props
-  const { TooltipComponent, DisplayMessageComponent, height } = model
+  const {
+    TooltipComponent,
+    DisplayMessageComponent,
+    height,
+    showLegend,
+    showTooltipsEnabled,
+  } = model
+  const theme = useTheme()
+  const legendItems = model.legendItems(theme)
   return (
     <div
       ref={ref}
@@ -64,16 +74,22 @@ const BaseLinearDisplay = observer(function (props: {
       )}
       {children}
 
-      <Suspense fallback={null}>
-        <TooltipComponent
-          model={model}
-          height={height}
-          offsetMouseCoord={offsetMouseCoord}
-          clientMouseCoord={clientMouseCoord}
-          clientRect={clientRect}
-          mouseCoord={offsetMouseCoord}
-        />
-      </Suspense>
+      {showLegend && legendItems.length > 0 ? (
+        <FloatingLegend items={legendItems} />
+      ) : null}
+
+      {showTooltipsEnabled ? (
+        <Suspense fallback={null}>
+          <TooltipComponent
+            model={model}
+            height={height}
+            offsetMouseCoord={offsetMouseCoord}
+            clientMouseCoord={clientMouseCoord}
+            clientRect={clientRect}
+            mouseCoord={offsetMouseCoord}
+          />
+        </Suspense>
+      ) : null}
       {contextCoord ? (
         <MenuPage
           contextCoord={contextCoord}
@@ -89,5 +105,5 @@ const BaseLinearDisplay = observer(function (props: {
 
 export default BaseLinearDisplay
 
-export { default as Tooltip } from './Tooltip'
-export { default as BlockMsg } from './BlockMsg'
+export { default as Tooltip } from './Tooltip.tsx'
+export { default as BlockMsg } from './BlockMsg.tsx'

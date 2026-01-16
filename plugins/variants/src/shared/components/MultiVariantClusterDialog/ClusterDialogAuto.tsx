@@ -8,14 +8,15 @@ import {
 } from '@jbrowse/core/util'
 import { createStopToken, stopStopToken } from '@jbrowse/core/util/stopToken'
 import { getRpcSessionId } from '@jbrowse/core/util/tracks'
+import { isAlive } from '@jbrowse/mobx-state-tree'
 import { Button, DialogActions, DialogContent } from '@mui/material'
 import { observer } from 'mobx-react'
-import { isAlive } from 'mobx-state-tree'
 
-import type { ReducedModel } from './types'
+import type { ReducedModel } from './types.ts'
+import type { StopToken } from '@jbrowse/core/util/stopToken'
 import type { LinearGenomeViewModel } from '@jbrowse/plugin-linear-genome-view'
 
-const ClusterDialogAuto = observer(function ({
+const ClusterDialogAuto = observer(function ClusterDialogAuto({
   model,
   children,
   handleClose,
@@ -27,7 +28,14 @@ const ClusterDialogAuto = observer(function ({
   const [progress, setProgress] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<unknown>()
-  const [stopToken, setStopToken] = useState('')
+  const [stopToken, setStopToken] = useState<StopToken>()
+  const { rpcManager } = getSession(model)
+  const {
+    sourcesWithoutLayout,
+    minorAlleleFrequencyFilter,
+    lengthCutoffFilter,
+    adapterConfig,
+  } = model
 
   return (
     <>
@@ -52,7 +60,7 @@ const ClusterDialogAuto = observer(function ({
       <DialogActions>
         <Button
           variant="contained"
-          disabled={loading}
+          disabled={loading || !model.sourcesWithoutLayout}
           onClick={async () => {
             try {
               setError(undefined)
@@ -62,13 +70,6 @@ const ClusterDialogAuto = observer(function ({
               if (!view.initialized) {
                 return
               }
-              const { rpcManager } = getSession(model)
-              const {
-                sourcesWithoutLayout,
-                minorAlleleFrequencyFilter,
-                lengthCutoffFilter,
-                adapterConfig,
-              } = model
               if (sourcesWithoutLayout) {
                 const sessionId = getRpcSessionId(model)
                 const stopToken = createStopToken()
@@ -88,17 +89,13 @@ const ClusterDialogAuto = observer(function ({
                       setProgress(arg)
                     },
                   },
-                )) as { order: number[] }
+                )) as { order: number[]; tree: string }
 
                 model.setLayout(
-                  ret.order.map(idx => {
-                    const ret = sourcesWithoutLayout[idx]
-                    if (!ret) {
-                      throw new Error(`out of bounds at ${idx}`)
-                    }
-                    return ret
-                  }),
+                  ret.order.map(idx => sourcesWithoutLayout[idx]!),
+                  false,
                 )
+                model.setClusterTree(ret.tree)
               }
               handleClose()
             } catch (e) {
@@ -109,7 +106,7 @@ const ClusterDialogAuto = observer(function ({
             } finally {
               setLoading(false)
               setProgress('')
-              setStopToken('')
+              setStopToken(undefined)
             }
           }}
         >

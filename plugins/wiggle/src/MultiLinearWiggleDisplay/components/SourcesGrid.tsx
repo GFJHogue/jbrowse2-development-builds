@@ -3,17 +3,17 @@ import { useState } from 'react'
 import { SanitizedHTML } from '@jbrowse/core/ui'
 import ColorPicker, { ColorPopover } from '@jbrowse/core/ui/ColorPicker'
 import { getStr, measureGridWidth } from '@jbrowse/core/util'
+import { makeStyles } from '@jbrowse/core/util/tss-react'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp'
 import KeyboardDoubleArrowDownIcon from '@mui/icons-material/KeyboardDoubleArrowDown'
 import KeyboardDoubleArrowUpIcon from '@mui/icons-material/KeyboardDoubleArrowUp'
 import { Button } from '@mui/material'
 import { DataGrid } from '@mui/x-data-grid'
-import { makeStyles } from 'tss-react/mui'
 
-import { moveDown, moveUp } from './util'
+import { moveDown, moveUp } from './util.ts'
 
-import type { Source } from '../../util'
+import type { Source } from '../../util.ts'
 import type { GridColDef, GridRowId } from '@mui/x-data-grid'
 
 const useStyles = makeStyles()({

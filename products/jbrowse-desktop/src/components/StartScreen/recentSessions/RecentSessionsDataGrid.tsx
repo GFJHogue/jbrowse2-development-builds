@@ -2,16 +2,16 @@ import { useCallback, useMemo, useState } from 'react'
 
 import DataGridFlexContainer from '@jbrowse/core/ui/DataGridFlexContainer'
 import { measureGridWidth } from '@jbrowse/core/util'
+import { makeStyles } from '@jbrowse/core/util/tss-react'
 import { Tooltip } from '@mui/material'
 import { DataGrid } from '@mui/x-data-grid'
 import { formatDistanceToNow } from 'date-fns'
-import { makeStyles } from 'tss-react/mui'
 
-import DateSinceLastUsed from './DateSinceLastUsed'
-import SessionNameCell from './SessionNameCell'
-import { useInnerDims } from '../availableGenomes/util'
+import DateSinceLastUsed from './DateSinceLastUsed.tsx'
+import SessionNameCell from './SessionNameCell.tsx'
+import { useInnerDims } from '../availableGenomes/util.ts'
 
-import type { RecentSessionData } from '../types'
+import type { RecentSessionData } from '../types.ts'
 import type PluginManager from '@jbrowse/core/PluginManager'
 
 const useStyles = makeStyles()({

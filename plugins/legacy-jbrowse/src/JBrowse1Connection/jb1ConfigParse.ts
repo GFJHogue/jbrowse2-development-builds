@@ -2,10 +2,10 @@
 import { objectHash } from '@jbrowse/core/util'
 import setValue from 'set-value'
 
-import getValue from './get-value'
-import { isSource, isTrack } from './util'
+import getValue from './get-value.ts'
+import { isSource, isTrack } from './util.ts'
 
-import type { Config, Names, Source, Store, Track } from './types'
+import type { Config, Names, Source, Store, Track } from './types.ts'
 
 export function parseJB1Json(config: Config | string, url: string): Config {
   if (typeof config === 'string') {
@@ -241,10 +241,14 @@ export function regularizeConf(conf: Config, url: string): Config {
     // conf, if needed
     const addBase: (Track | Store | Names)[] = []
     if (conf.tracks) {
-      addBase.push(...conf.tracks)
+      for (const track of conf.tracks) {
+        addBase.push(track)
+      }
     }
     if (conf.stores) {
-      addBase.push(...Object.values(conf.stores))
+      for (const store of Object.values(conf.stores)) {
+        addBase.push(store)
+      }
     }
     if (conf.names) {
       addBase.push(conf.names)

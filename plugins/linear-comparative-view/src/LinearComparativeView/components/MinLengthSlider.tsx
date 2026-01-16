@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
 
+import { toLocale } from '@jbrowse/core/util'
+import { makeStyles } from '@jbrowse/core/util/tss-react'
 import { Box, Slider, Typography } from '@mui/material'
 import { observer } from 'mobx-react'
-import { makeStyles } from 'tss-react/mui'
 
-import SliderTooltip from './SliderTooltip'
+import SliderTooltip from './SliderTooltip.tsx'
 
-import type { LinearSyntenyDisplayModel } from '../../LinearSyntenyDisplay/model'
-import type { LinearComparativeViewModel } from '../model'
+import type { LinearSyntenyDisplayModel } from '../../LinearSyntenyDisplay/model.ts'
+import type { LinearComparativeViewModel } from '../model.ts'
 
 const useStyles = makeStyles()({
   container: {
@@ -19,7 +20,7 @@ const useStyles = makeStyles()({
   },
 })
 
-const MinLengthSlider = observer(function ({
+const MinLengthSlider = observer(function MinLengthSlider({
   model,
 }: {
   model: LinearComparativeViewModel
@@ -69,9 +70,7 @@ const MinLengthSlider = observer(function ({
         min={0}
         max={Math.log2(1000000) * 100}
         valueLabelDisplay="auto"
-        valueLabelFormat={newValue =>
-          Math.round(2 ** (newValue / 100)).toLocaleString()
-        }
+        valueLabelFormat={val => toLocale(Math.round(2 ** (val / 100)))}
         size="small"
         style={{ minWidth: 100 }}
         slots={{

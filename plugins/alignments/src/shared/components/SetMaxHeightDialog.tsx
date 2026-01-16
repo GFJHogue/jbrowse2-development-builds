@@ -1,6 +1,7 @@
 import { useState } from 'react'
 
 import { Dialog } from '@jbrowse/core/ui'
+import { makeStyles } from '@jbrowse/core/util/tss-react'
 import {
   Button,
   DialogActions,
@@ -9,7 +10,6 @@ import {
   Typography,
 } from '@mui/material'
 import { observer } from 'mobx-react'
-import { makeStyles } from 'tss-react/mui'
 
 const useStyles = makeStyles()({
   root: {
@@ -17,7 +17,7 @@ const useStyles = makeStyles()({
   },
 })
 
-const SetMaxHeightDialog = observer(function (props: {
+const SetMaxHeightDialog = observer(function SetMaxHeightDialog(props: {
   model: {
     maxHeight?: number
     setMaxHeight: (arg?: number) => void
@@ -30,11 +30,11 @@ const SetMaxHeightDialog = observer(function (props: {
   const [max, setMax] = useState(`${maxHeight}`)
 
   return (
-    <Dialog open onClose={handleClose} title="Set max height">
+    <Dialog open onClose={handleClose} title="Set max track height">
       <DialogContent className={classes.root}>
         <Typography>
-          Set max height for the track. For example, you can increase this if
-          the layout says &quot;Max height reached&quot;
+          Set max layout height for the track. For example, you can increase
+          this if the layout says &quot;Max height reached&quot;
         </Typography>
         <TextField
           value={max}

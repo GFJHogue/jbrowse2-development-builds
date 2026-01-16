@@ -16,53 +16,42 @@ import {
   getParentRenderProps,
   getRpcSessionId,
 } from '@jbrowse/core/util/tracks'
+import { addDisposer, flow, isAlive, types } from '@jbrowse/mobx-state-tree'
 import CenterFocusStrongIcon from '@mui/icons-material/CenterFocusStrong'
+import CloseFullscreenIcon from '@mui/icons-material/CloseFullscreen'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import MenuOpenIcon from '@mui/icons-material/MenuOpen'
-import copy from 'copy-to-clipboard'
 import { autorun } from 'mobx'
-import { addDisposer, isAlive, types } from 'mobx-state-tree'
 
-import FeatureDensityMixin from './models/FeatureDensityMixin'
-import TrackHeightMixin from './models/TrackHeightMixin'
-import configSchema from './models/configSchema'
-import BlockState from './models/serverSideRenderedBlock'
+import { deduplicateFeatureLabels } from './components/util.ts'
+import { calculateSvgLegendWidth } from './index.ts'
+import FeatureDensityMixin from './models/FeatureDensityMixin.tsx'
+import TrackHeightMixin from './models/TrackHeightMixin.tsx'
+import configSchema from './models/configSchema.ts'
+import BlockState from './models/serverSideRenderedBlock.ts'
+import {
+  fetchFeatureByIdRpc,
+  findSubfeatureById,
+  getTranscripts,
+  hasExonsOrCDS,
+} from './util.ts'
 
-import type { LinearGenomeViewModel } from '../LinearGenomeView'
-import type { ExportSvgOptions } from '../LinearGenomeView/types'
+import type { LinearGenomeViewModel } from '../LinearGenomeView/index.ts'
+import type { LegendItem } from './components/FloatingLegend.tsx'
+import type { ExportSvgDisplayOptions, LayoutRecord } from './types.ts'
 import type { MenuItem } from '@jbrowse/core/ui'
 import type { AnyReactComponentType, Feature } from '@jbrowse/core/util'
 import type { BaseBlock } from '@jbrowse/core/util/blockTypes'
-import type { ThemeOptions } from '@mui/material'
-import type { Instance } from 'mobx-state-tree'
+import type { Instance } from '@jbrowse/mobx-state-tree'
+import type { Theme } from '@mui/material'
 
 // lazies
-const Tooltip = lazy(() => import('./components/Tooltip'))
+const Tooltip = lazy(() => import('./components/Tooltip.tsx'))
+const CollapseIntronsDialog = lazy(
+  () => import('./components/CollapseIntronsDialog/CollapseIntronsDialog.tsx'),
+)
 
 type LGV = LinearGenomeViewModel
-
-export interface Layout {
-  minX: number
-  minY: number
-  maxX: number
-  maxY: number
-  name: string
-}
-
-type LayoutRecord =
-  | [number, number, number, number]
-  | [
-      number,
-      number,
-      number,
-      number,
-      { label?: string; description?: string; refName: string },
-    ]
-
-export interface ExportSvgDisplayOptions extends ExportSvgOptions {
-  overrideHeight: number
-  theme: ThemeOptions
-}
 
 /**
  * #stateModel BaseLinearDisplay
@@ -93,6 +82,14 @@ function stateModelFactory() {
          * #property
          */
         configuration: ConfigurationReference(configSchema),
+        /**
+         * #property
+         */
+        showLegend: types.maybe(types.boolean),
+        /**
+         * #property
+         */
+        showTooltips: types.maybe(types.boolean),
       }),
     )
     .volatile(() => ({
@@ -101,6 +98,10 @@ function stateModelFactory() {
        * #volatile
        */
       featureIdUnderMouse: undefined as undefined | string,
+      /**
+       * #volatile
+       */
+      subfeatureIdUnderMouse: undefined as undefined | string,
       /**
        * #volatile
        */
@@ -150,6 +151,27 @@ function stateModelFactory() {
       },
 
       /**
+       * #method
+       * Override in subclasses to provide legend items for the display
+       * @param _theme - MUI theme for accessing palette colors
+       */
+      legendItems(_theme?: Theme): LegendItem[] {
+        return []
+      },
+
+      /**
+       * #method
+       * Returns the width needed for the SVG legend if showLegend is enabled.
+       * Used by SVG export to add extra width for the legend area.
+       * @param theme - MUI theme for accessing palette colors
+       */
+      svgLegendWidth(theme?: Theme): number {
+        return self.showLegend
+          ? calculateSvgLegendWidth(this.legendItems(theme))
+          : 0
+      },
+
+      /**
        * #getter
        * returns a string feature ID if the globally-selected object
        * is probably a feature
@@ -163,17 +185,27 @@ function stateModelFactory() {
         }
         return undefined
       },
+
       /**
-       * #method
+       * #getter
+       * Override in subclasses to use a different feature widget
        */
-      copyInfoToClipboard(feature: Feature) {
-        const { uniqueId, ...rest } = feature.toJSON()
-        const session = getSession(self)
-        copy(JSON.stringify(rest, null, 4))
-        session.notify('Copied to clipboard', 'success')
+      get featureWidgetType() {
+        return {
+          type: 'BaseFeatureWidget',
+          id: 'baseFeature',
+        }
       },
     }))
     .views(self => ({
+      /**
+       * #getter
+       * whether to show tooltips on mouseover, defaults to true
+       */
+      get showTooltipsEnabled() {
+        return self.showTooltips ?? true
+      },
+
       /**
        * #getter
        * a CompositeMap of `featureId -> feature obj` that
@@ -198,13 +230,34 @@ function stateModelFactory() {
       },
 
       /**
+       * #method
+       * Finds a feature by ID, checking both top-level features and
+       * subfeatures if parentFeatureId is provided
+       */
+      getFeatureById(featureId: string, parentFeatureId?: string) {
+        const feature = this.features.get(featureId)
+        if (feature) {
+          return feature
+        }
+        if (parentFeatureId) {
+          const parent = this.features.get(parentFeatureId)
+          if (parent) {
+            return findSubfeatureById(parent, featureId)
+          }
+        }
+        return undefined
+      },
+
+      /**
        * #getter
        */
       get layoutFeatures() {
         const featureMaps = []
         for (const block of self.blockState.values()) {
-          if (block.layout) {
-            featureMaps.push(block.layout.rectangles)
+          if (block.layout?.getRectangles) {
+            // Use getRectangles() to get consistent tuple format [left, top, right, bottom, data]
+            // This works for both GranularRectLayout (raw) and PrecomputedLayout (serialized)
+            featureMaps.push(block.layout.getRectangles())
           }
         }
         return new CompositeMap<string, LayoutRecord>(featureMaps)
@@ -232,14 +285,32 @@ function stateModelFactory() {
        * #getter
        */
       searchFeatureByID(id: string): LayoutRecord | undefined {
-        let ret: LayoutRecord | undefined
         for (const block of self.blockState.values()) {
           const val = block.layout?.getByID(id)
           if (val) {
-            ret = val
+            return val
           }
         }
-        return ret
+        return undefined
+      },
+
+      /**
+       * #getter
+       * Deduplicated floating label data, computed and cached by MobX
+       */
+      get floatingLabelData() {
+        const view = getContainingView(self) as LGV
+        const { assemblyManager } = getSession(self)
+        const assemblyName = view.assemblyNames[0]
+        const assembly = assemblyName
+          ? assemblyManager.get(assemblyName)
+          : undefined
+        return deduplicateFeatureLabels(
+          this.layoutFeatures,
+          view,
+          assembly,
+          view.bpPerPx,
+        )
       },
     }))
 
@@ -248,13 +319,14 @@ function stateModelFactory() {
        * #action
        */
       addBlock(key: string, block: BaseBlock) {
-        self.blockState.set(
+        const blockInstance = BlockState.create({
           key,
-          BlockState.create({
-            key,
-            region: block.toRegion(),
-          }),
-        )
+          region: block.toRegion(),
+        })
+        // Set cached display BEFORE adding to map - afterAttach fires when
+        // the block is added, so cachedDisplay must be set first
+        blockInstance.setCachedDisplay(self)
+        self.blockState.set(key, blockInstance)
       },
 
       /**
@@ -268,40 +340,34 @@ function stateModelFactory() {
        */
       selectFeature(feature: Feature) {
         const session = getSession(self)
+        if (isSelectionContainer(session)) {
+          session.setSelection(feature)
+        }
         if (isSessionModelWithWidgets(session)) {
           const { rpcManager } = session
           const sessionId = getRpcSessionId(self)
           const track = getContainingTrack(self)
           const view = getContainingView(self)
           const adapterConfig = getConf(track, 'adapter')
-
-          // eslint-disable-next-line @typescript-eslint/no-floating-promises
-          ;(async () => {
-            try {
-              const descriptions = await rpcManager.call(
-                sessionId,
-                'CoreGetMetadata',
-                {
-                  adapterConfig,
-                },
-              )
-              session.showWidget(
-                session.addWidget('BaseFeatureWidget', 'baseFeature', {
-                  featureData: feature.toJSON(),
-                  view,
-                  track,
-                  descriptions,
-                }),
-              )
-            } catch (e) {
+          const { type, id } = self.featureWidgetType
+          rpcManager
+            .call(sessionId, 'CoreGetMetadata', { adapterConfig })
+            .then(descriptions => {
+              if (isAlive(self)) {
+                session.showWidget(
+                  session.addWidget(type, id, {
+                    featureData: feature.toJSON(),
+                    view,
+                    track,
+                    descriptions,
+                  }),
+                )
+              }
+            })
+            .catch((e: unknown) => {
               console.error(e)
-              getSession(e).notifyError(`${e}`, e)
-            }
-          })()
-        }
-
-        if (isSelectionContainer(session)) {
-          session.setSelection(feature)
+              getSession(self).notifyError(`${e}`, e)
+            })
         }
       },
 
@@ -332,6 +398,13 @@ function stateModelFactory() {
       /**
        * #action
        */
+      setSubfeatureIdUnderMouse(subfeatureId?: string) {
+        self.subfeatureIdUnderMouse = subfeatureId
+      },
+
+      /**
+       * #action
+       */
       setContextMenuFeature(feature?: Feature) {
         self.contextMenuFeature = feature
       },
@@ -340,6 +413,18 @@ function stateModelFactory() {
        */
       setMouseoverExtraInformation(extra?: string) {
         self.mouseoverExtraInformation = extra
+      },
+      /**
+       * #action
+       */
+      setShowLegend(s: boolean) {
+        self.showLegend = s
+      },
+      /**
+       * #action
+       */
+      setShowTooltips(arg: boolean) {
+        self.showTooltips = arg
       },
     }))
 
@@ -362,6 +447,89 @@ function stateModelFactory() {
       }
     })
 
+    .actions(self => ({
+      /**
+       * #action
+       * Select a feature by ID, looking up in features map and subfeatures.
+       * Falls back to RPC if not found locally (e.g., for canvas renderer).
+       * @param featureId - The ID of the feature to select
+       * @param parentFeatureId - The immediate parent's ID for subfeature lookup
+       * @param topLevelFeatureId - The top-level feature ID for RPC lookup
+       */
+      selectFeatureById: flow(function* (
+        featureId: string,
+        parentFeatureId?: string,
+        topLevelFeatureId?: string,
+      ) {
+        const feature = self.getFeatureById(featureId, parentFeatureId)
+        if (feature) {
+          self.selectFeature(feature)
+          return
+        }
+        const rpcParentId =
+          topLevelFeatureId && topLevelFeatureId !== featureId
+            ? topLevelFeatureId
+            : parentFeatureId
+        try {
+          const session = getSession(self)
+          const f = yield fetchFeatureByIdRpc({
+            rpcManager: session.rpcManager,
+            sessionId: getRpcSessionId(self),
+            trackId: getContainingTrack(self).id,
+            rendererType: self.rendererTypeName,
+            featureId,
+            parentFeatureId: rpcParentId,
+          })
+          if (f && isAlive(self)) {
+            self.selectFeature(f)
+          }
+        } catch (e) {
+          console.error(e)
+          getSession(self).notifyError(`${e}`, e)
+        }
+      }),
+      /**
+       * #action
+       * Set context menu feature by ID, looking up in features map and subfeatures.
+       * Falls back to RPC if not found locally (e.g., for canvas renderer).
+       * @param featureId - The ID of the feature to set
+       * @param parentFeatureId - The immediate parent's ID for subfeature lookup
+       * @param topLevelFeatureId - The top-level feature ID for RPC lookup
+       */
+      setContextMenuFeatureById: flow(function* (
+        featureId: string,
+        parentFeatureId?: string,
+        topLevelFeatureId?: string,
+      ) {
+        const feature = self.getFeatureById(featureId, parentFeatureId)
+        if (feature) {
+          self.setContextMenuFeature(feature)
+          return
+        }
+        const rpcParentId =
+          topLevelFeatureId && topLevelFeatureId !== featureId
+            ? topLevelFeatureId
+            : parentFeatureId
+        try {
+          const session = getSession(self)
+          const f = yield fetchFeatureByIdRpc({
+            rpcManager: session.rpcManager,
+            sessionId: getRpcSessionId(self),
+            trackId: getContainingTrack(self).id,
+            rendererType: self.rendererTypeName,
+            featureId,
+            parentFeatureId: rpcParentId,
+          })
+          if (f && isAlive(self)) {
+            self.setContextMenuFeature(f)
+          }
+        } catch (e) {
+          console.error(e)
+          getSession(self).notifyError(`${e}`, e)
+        }
+      }),
+    }))
+
     .views(self => ({
       /**
        * #method
@@ -375,6 +543,8 @@ function stateModelFactory() {
        */
       contextMenuItems(): MenuItem[] {
         const feat = self.contextMenuFeature
+        const transcripts = getTranscripts(feat)
+
         return feat
           ? [
               {
@@ -394,63 +564,77 @@ function stateModelFactory() {
               {
                 label: 'Copy info to clipboard',
                 icon: ContentCopyIcon,
-                onClick: () => {
-                  self.copyInfoToClipboard(feat)
+                onClick: async () => {
+                  const { uniqueId, ...rest } = feat.toJSON()
+                  const session = getSession(self)
+                  const { default: copy } = await import('copy-to-clipboard')
+                  copy(JSON.stringify(rest, null, 4))
+                  session.notify('Copied to clipboard', 'success')
                 },
               },
+              ...(hasExonsOrCDS(transcripts)
+                ? [
+                    {
+                      label: 'Collapse introns',
+                      icon: CloseFullscreenIcon,
+                      onClick: () => {
+                        const view = getContainingView(self) as LGV
+                        const { assemblyManager } = getSession(self)
+                        const assembly = assemblyManager.get(
+                          view.assemblyNames[0]!,
+                        )
+                        if (assembly) {
+                          getSession(self).queueDialog(handleClose => [
+                            CollapseIntronsDialog,
+                            {
+                              view,
+                              transcripts,
+                              handleClose,
+                              assembly,
+                            },
+                          ])
+                        }
+                      },
+                    },
+                  ]
+                : []),
             ]
           : []
       },
       /**
        * #method
+       * props for the renderer's React "Rendering" component - client-side
+       * only, never sent to the worker. includes displayModel and callbacks
+       */
+      renderingProps() {
+        return {
+          displayModel: self,
+          // @deprecated - renderers should call displayModel methods directly
+          // e.g. displayModel.setFeatureIdUnderMouse(featureId)
+          onMouseMove(_: unknown, featureId?: string) {
+            self.setFeatureIdUnderMouse(featureId)
+          },
+          // @deprecated - renderers should call displayModel methods directly
+          // e.g. displayModel.setFeatureIdUnderMouse(undefined)
+          onMouseLeave(_: unknown) {
+            self.setFeatureIdUnderMouse(undefined)
+          },
+          // @deprecated - renderers should call displayModel methods directly
+          onContextMenu(_: unknown) {
+            self.setContextMenuFeature(undefined)
+            self.clearFeatureSelection()
+          },
+        }
+      },
+      /**
+       * #method
+       * props sent to the worker for server-side rendering
        */
       renderProps() {
         return {
           ...getParentRenderProps(self),
           notReady: !self.featureDensityStatsReady,
-          rpcDriverName: self.rpcDriverName,
-
-          displayModel: self,
-          onFeatureClick(_: unknown, featureId?: string) {
-            const f = featureId || self.featureIdUnderMouse
-            if (!f) {
-              self.clearFeatureSelection()
-            } else {
-              const feature = self.features.get(f)
-              if (feature) {
-                self.selectFeature(feature)
-              }
-            }
-          },
-          onClick() {
-            self.clearFeatureSelection()
-          },
-          // similar to click but opens a menu with further
-          // options
-          onFeatureContextMenu(_: unknown, featureId?: string) {
-            const f = featureId || self.featureIdUnderMouse
-            if (!f) {
-              self.clearFeatureSelection()
-            } else {
-              // feature id under mouse passed to context menu
-              self.setContextMenuFeature(self.features.get(f))
-            }
-          },
-
-          onMouseMove(_: unknown, featureId?: string, extra?: string) {
-            self.setFeatureIdUnderMouse(featureId)
-            self.setMouseoverExtraInformation(extra)
-          },
-
-          onMouseLeave(_: unknown) {
-            self.setFeatureIdUnderMouse(undefined)
-            self.setMouseoverExtraInformation(undefined)
-          },
-
-          onContextMenu() {
-            self.setContextMenuFeature(undefined)
-            self.clearFeatureSelection()
-          },
+          rpcDriverName: self.effectiveRpcDriverName,
         }
       },
     }))
@@ -459,9 +643,7 @@ function stateModelFactory() {
        * #method
        */
       async renderSvg(opts: ExportSvgDisplayOptions) {
-        const { renderBaseLinearDisplaySvg } = await import(
-          './models/renderSvg'
-        )
+        const { renderBaseLinearDisplaySvg } = await import('./renderSvg.tsx')
         return renderBaseLinearDisplaySvg(self as BaseLinearDisplayModel, opts)
       },
       afterAttach() {
@@ -470,24 +652,42 @@ function stateModelFactory() {
         // deleting to match the parent blocks)
         addDisposer(
           self,
-          autorun(() => {
-            const blocksPresent: Record<string, boolean> = {}
-            const view = getContainingView(self) as LGV
-            if (!view.initialized) {
-              return
-            }
-            for (const block of self.blockDefinitions.contentBlocks) {
-              blocksPresent[block.key] = true
-              if (!self.blockState.has(block.key)) {
-                self.addBlock(block.key, block)
+          autorun(
+            function blockDefinitionsAutorun() {
+              try {
+                if (!isAlive(self)) {
+                  return
+                }
+                const view = getContainingView(self) as LGV
+                if (!view.initialized) {
+                  return
+                }
+                const contentBlocks = self.blockDefinitions.contentBlocks
+                const newKeys = new Set(contentBlocks.map(b => b.key))
+
+                // Add new blocks
+                for (const block of contentBlocks) {
+                  if (!self.blockState.has(block.key)) {
+                    self.addBlock(block.key, block)
+                  }
+                }
+
+                // Remove old blocks
+                for (const key of self.blockState.keys()) {
+                  if (!newKeys.has(key)) {
+                    self.deleteBlock(key)
+                  }
+                }
+              } catch (e) {
+                // catch errors that may occur during test cleanup or when
+                // the display is not properly attached to a view
               }
-            }
-            for (const key of self.blockState.keys()) {
-              if (!blocksPresent[key]) {
-                self.deleteBlock(key)
-              }
-            }
-          }),
+            },
+            {
+              name: 'BaseLinearDisplayBlockDefinitions',
+              delay: 60,
+            },
+          ),
         )
       },
     }))
@@ -503,7 +703,7 @@ function stateModelFactory() {
       return { heightPreConfig: height, ...rest }
     })
     .postProcessSnapshot(snap => {
-      // xref https://github.com/mobxjs/mobx-state-tree/issues/1524 for Omit
+      // xref for Omit https://github.com/mobxjs/mobx-state-tree/issues/1524
       const r = snap as Omit<typeof snap, symbol>
       const { blockState, ...rest } = r
       return rest
@@ -514,3 +714,5 @@ export const BaseLinearDisplay = stateModelFactory()
 
 export type BaseLinearDisplayStateModel = typeof BaseLinearDisplay
 export type BaseLinearDisplayModel = Instance<BaseLinearDisplayStateModel>
+
+export { type LegendItem } from './components/FloatingLegend.tsx'

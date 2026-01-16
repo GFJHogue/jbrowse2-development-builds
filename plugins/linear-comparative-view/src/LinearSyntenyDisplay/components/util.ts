@@ -10,9 +10,9 @@ import {
   toLocale,
 } from '@jbrowse/core/util'
 
-import { MAX_COLOR_RANGE, getId } from '../drawSynteny'
+import { MAX_COLOR_RANGE, getId } from '../drawSynteny.ts'
 
-import type { LinearSyntenyDisplayModel } from '../model'
+import type { LinearSyntenyDisplayModel } from '../model.ts'
 import type { Feature } from '@jbrowse/core/util'
 
 interface Pos {
@@ -338,8 +338,8 @@ export function getTooltip({
     `Loc1: ${assembleLocString(f1)}`,
     `Loc2: ${assembleLocString(f2)}`,
     `Inverted: ${f1.strand === -1}`,
-    `Query len: ${l1.toLocaleString('en-US')}`,
-    `Target len: ${l2.toLocaleString('en-US')}`,
+    `Query len: ${toLocale(l1)}`,
+    `Target len: ${toLocale(l2)}`,
     identity ? `Identity: ${identity.toPrecision(2)}` : '',
     cigarOp ? `CIGAR operator: ${toLocale(+cigarOpLen!)}${cigarOp}` : '',
     n1 ? `Name 1: ${n1}` : '',

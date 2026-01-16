@@ -1,7 +1,7 @@
 import { ConfigurationSchema } from '@jbrowse/core/configuration'
 import { linearBasicDisplayConfigSchemaFactory } from '@jbrowse/plugin-linear-genome-view'
 
-import { defaultFilterFlags } from '../shared/util'
+import { defaultFilterFlags } from '../shared/util.ts'
 
 import type PluginManager from '@jbrowse/core/PluginManager'
 
@@ -12,6 +12,11 @@ function configSchemaF(pluginManager: PluginManager) {
   return ConfigurationSchema(
     'LinearReadCloudDisplay',
     {
+      minSubfeatureWidth: {
+        type: 'number',
+        defaultValue: 1,
+      },
+
       /**
        * #slot
        */
@@ -27,6 +32,30 @@ function configSchemaF(pluginManager: PluginManager) {
       featureHeight: {
         type: 'number',
         defaultValue: 7,
+      },
+
+      /**
+       * #slot
+       */
+      hideSmallIndels: {
+        type: 'boolean',
+        defaultValue: false,
+      },
+
+      /**
+       * #slot
+       */
+      hideMismatches: {
+        type: 'boolean',
+        defaultValue: false,
+      },
+
+      /**
+       * #slot
+       */
+      hideLargeIndels: {
+        type: 'boolean',
+        defaultValue: false,
       },
 
       /**

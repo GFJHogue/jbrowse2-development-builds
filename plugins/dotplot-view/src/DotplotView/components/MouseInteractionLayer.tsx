@@ -1,6 +1,8 @@
-import Grid from './Grid'
+import { observer } from 'mobx-react'
 
-import type { DotplotViewModel } from '../model'
+import DotplotGridWrapper from './DotplotGridWrapper.tsx'
+
+import type { DotplotViewModel } from '../model.ts'
 
 type Coord = [number, number] | undefined
 
@@ -18,7 +20,7 @@ interface MouseInteractionLayerProps {
   setCtrlKeyWasUsed: (wasUsed: boolean) => void
 }
 
-export default function MouseInteractionLayer({
+const MouseInteractionLayer = observer(function MouseInteractionLayer({
   model,
   ctrlKeyDown,
   cursorMode,
@@ -43,7 +45,7 @@ export default function MouseInteractionLayer({
         }
       }}
     >
-      <Grid model={model}>
+      <DotplotGridWrapper model={model}>
         {validSelect && mousedown && mouserect ? (
           <rect
             fill="rgba(255,0,0,0.3)"
@@ -53,7 +55,9 @@ export default function MouseInteractionLayer({
             height={Math.abs(ydistance)}
           />
         ) : null}
-      </Grid>
+      </DotplotGridWrapper>
     </div>
   )
-}
+})
+
+export default MouseInteractionLayer

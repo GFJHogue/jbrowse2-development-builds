@@ -3,8 +3,8 @@ id: linearreadarcsdisplay
 title: LinearReadArcsDisplay
 ---
 
-Note: this document is automatically generated from mobx-state-tree objects in
-our source code. See
+Note: this document is automatically generated from @jbrowse/mobx-state-tree
+objects in our source code. See
 [Core concepts and intro to pluggable elements](/docs/developer_guide/) for more
 info
 
@@ -42,58 +42,25 @@ type: types.literal('LinearReadArcsDisplay')
 
 ```js
 // type signature
-AnyConfigurationSchemaType
+any
 // code
 configuration: ConfigurationReference(configSchema)
 ```
 
-#### property: lineWidth
-
-Width of the arc lines (thin, bold, extra bold)
+#### property: showLegend
 
 ```js
 // type signature
-IMaybe<ISimpleType<number>>
+IMaybe<ISimpleType<boolean>>
 // code
-lineWidth: types.maybe(types.number)
-```
-
-#### property: jitter
-
-Jitter amount for x-position to better visualize overlapping arcs
-
-```js
-// type signature
-IMaybe<ISimpleType<number>>
-// code
-jitter: types.maybe(types.number)
-```
-
-#### property: drawInter
-
-Whether to draw inter-region vertical lines
-
-```js
-// type signature
-true
-// code
-drawInter: true
-```
-
-#### property: drawLongRange
-
-Whether to draw long-range connections
-
-```js
-// type signature
-true
-// code
-drawLongRange: true
+showLegend: types.maybe(types.boolean)
 ```
 
 ### LinearReadArcsDisplay - Getters
 
 #### getter: colorBy
+
+Get the color settings (from override or configuration)
 
 ```js
 // type
@@ -102,30 +69,35 @@ any
 
 #### getter: filterBy
 
-```js
-// type
-any
-```
-
-#### getter: lineWidthSetting
+Get the filter settings (from override or configuration)
 
 ```js
 // type
 any
-```
-
-#### getter: jitterVal
-
-```js
-// type
-number
 ```
 
 ### LinearReadArcsDisplay - Methods
 
-#### method: renderProps
+#### method: legendItems
 
-only used to tell system it's ready for export
+Returns legend items based on current colorBy setting
+
+```js
+// type signature
+legendItems: () => LegendItem[]
+```
+
+#### method: svgLegendWidth
+
+Returns the width needed for the SVG legend if showLegend is enabled. Used by
+SVG export to add extra width for the legend area.
+
+```js
+// type signature
+svgLegendWidth: () => number
+```
+
+#### method: renderProps
 
 ```js
 // type signature
@@ -136,58 +108,30 @@ renderProps: () => any
 
 ```js
 // type signature
-trackMenuItems: () => (MenuDivider | MenuSubHeader | NormalMenuItem | CheckboxMenuItem | RadioMenuItem | SubMenuItem | { ...; } | { ...; } | { ...; } | { ...; })[]
+trackMenuItems: () => any[]
 ```
 
 #### method: renderSvg
 
 ```js
 // type signature
-renderSvg: (opts: { rasterizeLayers?: boolean; }) => Promise<React.ReactNode>
+renderSvg: (opts: ExportSvgDisplayOptions) => Promise<React.ReactNode>
 ```
 
 ### LinearReadArcsDisplay - Actions
 
+#### action: setShowLegend
+
+```js
+// type signature
+setShowLegend: (s: boolean) => void
+```
+
 #### action: reload
+
+Reload the display (clears error state)
 
 ```js
 // type signature
 reload: () => void
-```
-
-#### action: setDrawInter
-
-Toggle drawing of inter-region vertical lines
-
-```js
-// type signature
-setDrawInter: (f: boolean) => void
-```
-
-#### action: setDrawLongRange
-
-Toggle drawing of long-range connections
-
-```js
-// type signature
-setDrawLongRange: (f: boolean) => void
-```
-
-#### action: setLineWidth
-
-Set the line width (thin=1, bold=2, extrabold=5, etc)
-
-```js
-// type signature
-setLineWidth: (n: number) => void
-```
-
-#### action: setJitter
-
-Set jitter amount for x-position Helpful to jitter the x direction so you see
-better evidence when e.g. 100 long reads map to same x position
-
-```js
-// type signature
-setJitter: (n: number) => void
 ```

@@ -2,10 +2,10 @@ import CascadingMenuButton from '@jbrowse/core/ui/CascadingMenuButton'
 import PaletteIcon from '@mui/icons-material/Palette'
 import { observer } from 'mobx-react'
 
-import type { LinearSyntenyDisplayModel } from '../../LinearSyntenyDisplay/model'
-import type { LinearComparativeViewModel } from '../model'
+import type { LinearSyntenyDisplayModel } from '../../LinearSyntenyDisplay/model.ts'
+import type { LinearComparativeViewModel } from '../model.ts'
 
-const ColorBySelector = observer(function ({
+const ColorBySelector = observer(function ColorBySelector({
   model,
 }: {
   model: LinearComparativeViewModel

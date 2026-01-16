@@ -2,30 +2,38 @@ import { lazy } from 'react'
 
 import { getConf, readConfObject } from '@jbrowse/core/configuration'
 import SerializableFilterChain from '@jbrowse/core/pluggableElementTypes/renderers/util/serializableFilterChain'
-import { getContainingView } from '@jbrowse/core/util'
+import { getContainingView, getSession } from '@jbrowse/core/util'
+import { cast, getSnapshot, isAlive, types } from '@jbrowse/mobx-state-tree'
 import { linearWiggleDisplayModelFactory } from '@jbrowse/plugin-wiggle'
+import FilterListIcon from '@mui/icons-material/FilterList'
 import VisibilityIcon from '@mui/icons-material/Visibility'
-import { observable } from 'mobx'
-import { cast, getEnv, isAlive, types } from 'mobx-state-tree'
 
-import { getUniqueModifications } from '../shared/getUniqueModifications'
-import { createAutorun, getColorForModification } from '../util'
+import { SharedModificationsMixin } from '../shared/SharedModificationsMixin.ts'
+import { getUniqueModifications } from '../shared/getUniqueModifications.ts'
+import { getSNPCoverageLegendItems } from '../shared/legendUtils.ts'
+import { isDefaultFilterFlags } from '../shared/util.ts'
+import { createAutorun } from '../util.ts'
 
-import type {
-  ColorBy,
-  FilterBy,
-  ModificationType,
-  ModificationTypeWithColor,
-} from '../shared/types'
+import type { ColorBy, FilterBy } from '../shared/types.ts'
 import type PluginManager from '@jbrowse/core/PluginManager'
 import type {
   AnyConfigurationModel,
   AnyConfigurationSchemaType,
 } from '@jbrowse/core/configuration'
-import type { LinearGenomeViewModel } from '@jbrowse/plugin-linear-genome-view'
+import type { Feature } from '@jbrowse/core/util'
+import type { Instance } from '@jbrowse/mobx-state-tree'
+import type {
+  ExportSvgDisplayOptions,
+  LegendItem,
+  LinearGenomeViewModel,
+} from '@jbrowse/plugin-linear-genome-view'
+import type { Theme } from '@mui/material'
 
 // lazies
-const Tooltip = lazy(() => import('./components/Tooltip'))
+const Tooltip = lazy(() => import('./components/Tooltip.tsx'))
+const FilterArcsByScoreDialog = lazy(
+  () => import('./components/FilterArcsByScoreDialog.tsx'),
+)
 
 // using a map because it preserves order
 const rendererTypes = new Map([['snpcoverage', 'SNPCoverageRenderer']])
@@ -45,6 +53,7 @@ function stateModelFactory(
     .compose(
       'LinearSNPCoverageDisplay',
       linearWiggleDisplayModelFactory(pluginManager, configSchema),
+      SharedModificationsMixin(),
       types.model({
         /**
          * #property
@@ -65,6 +74,10 @@ function stateModelFactory(
         /**
          * #property
          */
+        minArcScore: types.optional(types.number, 0),
+        /**
+         * #property
+         */
         filterBySetting: types.frozen<FilterBy | undefined>(),
         /**
          * #property
@@ -76,22 +89,6 @@ function stateModelFactory(
         jexlFilters: types.optional(types.array(types.string), []),
       }),
     )
-    .volatile(() => ({
-      /**
-       * #volatile
-       */
-      visibleModifications: observable.map<string, ModificationTypeWithColor>(
-        {},
-      ),
-      /**
-       * #volatile
-       */
-      simplexModifications: new Set<string>(),
-      /**
-       * #volatile
-       */
-      modificationsReady: false,
-    }))
     .views(self => ({
       /**
        * #getter
@@ -138,26 +135,6 @@ function stateModelFactory(
       setJexlFilters(filters: string[]) {
         self.jexlFilters = cast(filters)
       },
-
-      /**
-       * #action
-       */
-      updateVisibleModifications(uniqueModifications: ModificationType[]) {
-        for (const modification of uniqueModifications) {
-          if (!self.visibleModifications.has(modification.type)) {
-            self.visibleModifications.set(modification.type, {
-              ...modification,
-              color: getColorForModification(modification.type),
-            })
-          }
-        }
-      },
-      /**
-       * #action
-       */
-      setSimplexModifications(simplex: string[]) {
-        self.simplexModifications = new Set(simplex)
-      },
     }))
     .views(self => {
       const { adapterProps: superAdapterProps } = self
@@ -177,17 +154,14 @@ function stateModelFactory(
 
           const { showArcs, showInterbaseCounts, showInterbaseIndicators } =
             self
-          return self.rendererType.configSchema.create(
-            {
-              ...configBlob,
-              showInterbaseCounts:
-                showInterbaseCounts ?? configBlob.showInterbaseCounts,
-              showInterbaseIndicators:
-                showInterbaseIndicators ?? configBlob.showInterbaseIndicators,
-              showArcs: showArcs ?? configBlob.showArcs,
-            },
-            getEnv(self),
-          )
+          return {
+            ...configBlob,
+            showInterbaseCounts:
+              showInterbaseCounts ?? configBlob.showInterbaseCounts,
+            showInterbaseIndicators:
+              showInterbaseIndicators ?? configBlob.showInterbaseIndicators,
+            showArcs: showArcs ?? configBlob.showArcs,
+          }
         },
         /**
          * #getter
@@ -196,6 +170,33 @@ function stateModelFactory(
           return (
             self.showArcs ?? readConfObject(this.rendererConfig, 'showArcs')
           )
+        },
+        /**
+         * #getter
+         * Collect all skip features from rendered blocks for cross-region arc drawing
+         * Uses a Map to deduplicate features that appear in multiple blocks
+         * Only computed when showArcsSetting is true for performance
+         * Filters out arcs with score below minArcScore
+         */
+        get skipFeatures(): Feature[] {
+          if (!this.showArcsSetting) {
+            return []
+          }
+          const { minArcScore } = self
+          const skipFeaturesMap = new Map<string, Feature>()
+          for (const block of self.blockState.values()) {
+            if (block.features) {
+              for (const feature of block.features.values()) {
+                if (
+                  feature.get('type') === 'skip' &&
+                  (feature.get('score') ?? 1) >= minArcScore
+                ) {
+                  skipFeaturesMap.set(feature.id(), feature)
+                }
+              }
+            }
+          }
+          return [...skipFeaturesMap.values()]
         },
         /**
          * #getter
@@ -223,7 +224,7 @@ function stateModelFactory(
           const view = getContainingView(self) as LGV
           return (
             view.initialized &&
-            self.statsReadyAndRegionNotTooLarge &&
+            self.featureDensityStatsReadyAndRegionNotTooLarge &&
             !self.error
           )
         },
@@ -247,12 +248,6 @@ function stateModelFactory(
       /**
        * #action
        */
-      setModificationsReady(flag: boolean) {
-        self.modificationsReady = flag
-      },
-      /**
-       * #action
-       */
       setShowInterbaseIndicators(arg: boolean) {
         self.showInterbaseIndicators = arg
       },
@@ -267,6 +262,12 @@ function stateModelFactory(
        */
       setShowArcs(arg: boolean) {
         self.showArcs = arg
+      },
+      /**
+       * #action
+       */
+      setMinArcScore(arg: number) {
+        self.minArcScore = arg
       },
     }))
     .actions(self => ({
@@ -305,7 +306,9 @@ function stateModelFactory(
     .views(self => {
       const {
         renderProps: superRenderProps,
-        trackMenuItems: superTrackMenuItems,
+        renderingProps: superRenderingProps,
+        renderSvg: superRenderSvg,
+        wiggleBaseTrackMenuItems,
       } = self
       return {
         /**
@@ -331,6 +334,27 @@ function stateModelFactory(
             simplexModifications: [...simplexModifications],
           }
         },
+
+        /**
+         * #method
+         */
+        renderingProps() {
+          return {
+            ...superRenderingProps(),
+            displayModel: self,
+          }
+        },
+
+        /**
+         * #method
+         * Custom renderSvg that includes sashimi arcs
+         */
+        async renderSvg(opts: ExportSvgDisplayOptions) {
+          const { renderSNPCoverageSvg } =
+            await import('./components/renderSvg.tsx')
+          return renderSNPCoverageSvg(self, opts, superRenderSvg)
+        },
+
         /**
          * #getter
          */
@@ -343,9 +367,22 @@ function stateModelFactory(
          */
         get adapterConfig() {
           const subadapter = getConf(self.parentTrack, 'adapter')
+          const view = getContainingView(self) as LGV
+          const session = getSession(self)
+          const { assemblyManager } = session
+          const assemblyName = view.assemblyNames[0]
+          const assembly = assemblyName
+            ? assemblyManager.get(assemblyName)
+            : undefined
+          const sequenceAdapterConfig =
+            assembly?.configuration?.sequence?.adapter
+          const sequenceAdapter = sequenceAdapterConfig
+            ? getSnapshot(sequenceAdapterConfig)
+            : undefined
           return {
             type: 'SNPCoverageAdapter',
             subadapter,
+            sequenceAdapter,
           }
         },
 
@@ -375,34 +412,66 @@ function stateModelFactory(
          */
         trackMenuItems() {
           return [
-            ...superTrackMenuItems(),
+            ...wiggleBaseTrackMenuItems(),
             {
-              label: 'Show insertion/clipping indicators',
+              label: 'Show...',
               icon: VisibilityIcon,
-              type: 'checkbox',
-              checked: self.showInterbaseIndicatorsSetting,
-              onClick: () => {
-                self.setShowInterbaseIndicators(
-                  !self.showInterbaseIndicatorsSetting,
-                )
-              },
+              type: 'subMenu',
+              subMenu: [
+                {
+                  label: 'Show tooltips',
+                  type: 'checkbox',
+                  checked: self.showTooltipsEnabled,
+                  onClick: () => {
+                    self.setShowTooltips(!self.showTooltipsEnabled)
+                  },
+                },
+                {
+                  label: 'Show legend',
+                  type: 'checkbox',
+                  checked: self.showLegend,
+                  onClick: () => {
+                    self.setShowLegend(!self.showLegend)
+                  },
+                },
+                {
+                  label: 'Insertion/clipping indicators',
+                  type: 'checkbox',
+                  checked: self.showInterbaseIndicatorsSetting,
+                  onClick: () => {
+                    self.setShowInterbaseIndicators(
+                      !self.showInterbaseIndicatorsSetting,
+                    )
+                  },
+                },
+                {
+                  label: 'Insertion/clipping counts',
+                  type: 'checkbox',
+                  checked: self.showInterbaseCountsSetting,
+                  onClick: () => {
+                    self.setShowInterbaseCounts(
+                      !self.showInterbaseCountsSetting,
+                    )
+                  },
+                },
+                {
+                  label: 'Sashimi arcs',
+                  type: 'checkbox',
+                  checked: self.showArcsSetting,
+                  onClick: () => {
+                    self.setShowArcs(!self.showArcsSetting)
+                  },
+                },
+              ],
             },
             {
-              label: 'Show insertion/clipping counts',
-              icon: VisibilityIcon,
-              type: 'checkbox',
-              checked: self.showInterbaseCountsSetting,
+              label: 'Filter arcs by score...',
+              icon: FilterListIcon,
               onClick: () => {
-                self.setShowInterbaseCounts(!self.showInterbaseCountsSetting)
-              },
-            },
-            {
-              label: 'Show arcs',
-              icon: VisibilityIcon,
-              type: 'checkbox',
-              checked: self.showArcsSetting,
-              onClick: () => {
-                self.setShowArcs(!self.showArcsSetting)
+                getSession(self).queueDialog(handleClose => [
+                  FilterArcsByScoreDialog,
+                  { model: self, handleClose },
+                ])
               },
             },
           ]
@@ -414,10 +483,67 @@ function stateModelFactory(
         get filters() {
           return new SerializableFilterChain({ filters: self.jexlFilters })
         },
+
+        /**
+         * #method
+         * Returns legend items for SNP coverage display
+         */
+        legendItems(theme: Theme): LegendItem[] {
+          return getSNPCoverageLegendItems(
+            self.colorBy,
+            self.visibleModifications,
+            theme,
+          )
+        },
       }
+    })
+    .preProcessSnapshot(snap => {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      if (snap) {
+        // @ts-expect-error
+        const { colorBy, colorBySetting, filterBySetting, filterBy, ...rest } =
+          snap
+        return {
+          ...rest,
+          filterBySetting: filterBySetting || filterBy,
+          colorBySetting: colorBySetting || colorBy,
+        }
+      }
+      return snap
+    })
+    .postProcessSnapshot(snap => {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      if (!snap) {
+        return snap
+      }
+      const {
+        showInterbaseCounts,
+        showInterbaseIndicators,
+        showArcs,
+        minArcScore,
+        filterBySetting,
+        colorBySetting,
+        jexlFilters,
+        ...rest
+      } = snap as Omit<typeof snap, symbol>
+      return {
+        ...rest,
+        ...(showInterbaseCounts !== undefined ? { showInterbaseCounts } : {}),
+        ...(showInterbaseIndicators !== undefined
+          ? { showInterbaseIndicators }
+          : {}),
+        ...(showArcs !== undefined ? { showArcs } : {}),
+        ...(minArcScore ? { minArcScore } : {}),
+        ...(!isDefaultFilterFlags(filterBySetting) ? { filterBySetting } : {}),
+        ...(colorBySetting !== undefined ? { colorBySetting } : {}),
+        // mst types wrong, nullish needed
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        ...(jexlFilters?.length ? { jexlFilters } : {}),
+      } as typeof snap
     })
 }
 
-export type SNPCoverageDisplayModel = ReturnType<typeof stateModelFactory>
+export type SNPCoverageDisplayStateModel = ReturnType<typeof stateModelFactory>
+export type SNPCoverageDisplayModel = Instance<SNPCoverageDisplayStateModel>
 
 export default stateModelFactory

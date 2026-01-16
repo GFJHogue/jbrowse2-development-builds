@@ -1,11 +1,11 @@
 import { ConfigurationReference, getConf } from '@jbrowse/core/configuration'
-import { types } from 'mobx-state-tree'
+import { types } from '@jbrowse/mobx-state-tree'
 
-import baseModelFactory from '../LinearComparativeDisplay/stateModelFactory'
+import baseModelFactory from '../LinearComparativeDisplay/stateModelFactory.ts'
 
 import type { AnyConfigurationSchemaType } from '@jbrowse/core/configuration'
 import type { Feature } from '@jbrowse/core/util'
-import type { Instance } from 'mobx-state-tree'
+import type { Instance } from '@jbrowse/mobx-state-tree'
 
 interface Pos {
   offsetPx: number
@@ -228,7 +228,7 @@ function stateModelFactory(configSchema: AnyConfigurationSchemaType) {
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         ;(async () => {
           try {
-            const { doAfterAttach } = await import('./afterAttach')
+            const { doAfterAttach } = await import('./afterAttach.ts')
             doAfterAttach(self)
           } catch (e) {
             console.error(e)

@@ -1,13 +1,13 @@
 import Base1DView from '@jbrowse/core/util/Base1DViewModel'
 import calculateDynamicBlocks from '@jbrowse/core/util/calculateDynamicBlocks'
+import { getParent } from '@jbrowse/mobx-state-tree'
 import { observable } from 'mobx'
-import { getParent } from 'mobx-state-tree'
 
-import type { Instance } from 'mobx-state-tree'
+import type { Instance } from '@jbrowse/mobx-state-tree'
 
 /**
  * #stateModel Dotplot1DView
- * ref https://mobx-state-tree.js.org/concepts/volatiles on volatile state used here
+ * ref https://@jbrowse/mobx-state-tree.js.org/concepts/volatiles on volatile state used here
  */
 function x() {} // eslint-disable-line @typescript-eslint/no-unused-vars
 
@@ -48,16 +48,30 @@ const Dotplot1DView = Base1DView.extend(self => {
        * #getter
        */
       get maxOffset() {
+        const contentPx = self.displayedRegionsTotalPx
+        const viewWidth = self.width
+        // When content is smaller than view (zoomed out), center it
+        if (contentPx <= viewWidth) {
+          return (contentPx - viewWidth) / 2
+        }
+        // Otherwise allow scrolling with small padding
         const leftPadding = 10
-        return self.displayedRegionsTotalPx - leftPadding
+        return contentPx - leftPadding
       },
 
       /**
        * #getter
        */
       get minOffset() {
+        const contentPx = self.displayedRegionsTotalPx
+        const viewWidth = self.width
+        // When content is smaller than view (zoomed out), center it
+        if (contentPx <= viewWidth) {
+          return (contentPx - viewWidth) / 2
+        }
+        // Otherwise allow scrolling with small padding
         const rightPadding = 30
-        return -self.width + rightPadding
+        return -viewWidth + rightPadding
       },
     },
     actions: {

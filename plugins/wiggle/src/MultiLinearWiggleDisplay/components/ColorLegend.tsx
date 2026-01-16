@@ -1,17 +1,21 @@
+import { useMemo } from 'react'
+
+import { getFillProps } from '@jbrowse/core/util'
+import { useTheme } from '@mui/material'
 import { observer } from 'mobx-react'
 
-import LegendItem from './LegendItem'
-import LegendItemText from './LegendItemText'
-import RectBg from './RectBg'
+import LegendItem from './LegendItem.tsx'
+import LegendItemText from './LegendItemText.tsx'
+import RectBg from './RectBg.tsx'
 
-import type { WiggleDisplayModel } from '../model'
+import type { MinimalModel } from './types.ts'
 
-const ColorLegend = observer(function ({
+const ColorLegend = observer(function ColorLegend({
   model,
   rowHeight,
   exportSVG,
 }: {
-  model: WiggleDisplayModel
+  model: MinimalModel
   rowHeight: number
   exportSVG?: boolean
 }) {
@@ -23,11 +27,17 @@ const ColorLegend = observer(function ({
     sources,
     labelWidth,
   } = model
-  const colorBoxWidth = renderColorBoxes ? 15 : 0
+  const colorBoxWidth = renderColorBoxes ? 20 : 0
   const legendWidth = labelWidth + colorBoxWidth + 5
   const svgOffset = exportSVG ? 10 : 0
   const extraOffset =
     svgOffset || (graphType && !rowHeightTooSmallForScalebar ? 50 : 0)
+  const theme = useTheme()
+
+  const textFillProps = useMemo(
+    () => getFillProps(theme.palette.text.primary),
+    [theme.palette.text.primary],
+  )
 
   return sources ? (
     <>
@@ -51,7 +61,7 @@ const ColorLegend = observer(function ({
           model={model}
           rowHeight={rowHeight}
           exportSVG={exportSVG}
-          labelWidth={labelWidth}
+          labelWidth={legendWidth}
         />
       ))}
       {/* Then render all text elements on top */}
@@ -63,6 +73,7 @@ const ColorLegend = observer(function ({
           model={model}
           rowHeight={rowHeight}
           exportSVG={exportSVG}
+          textFillProps={textFillProps}
         />
       ))}
     </>

@@ -2,20 +2,29 @@ import type React from 'react'
 
 import { ConfigurationReference, getConf } from '@jbrowse/core/configuration'
 import { BaseDisplay } from '@jbrowse/core/pluggableElementTypes'
+import { types } from '@jbrowse/mobx-state-tree'
 import {
   FeatureDensityMixin,
   TrackHeightMixin,
 } from '@jbrowse/plugin-linear-genome-view'
-import { types } from 'mobx-state-tree'
 
-import { LinearReadDisplayBaseMixin } from '../shared/LinearReadDisplayBaseMixin'
+import { LinearReadArcsDisplaySettingsMixin } from '../shared/LinearReadArcsDisplaySettingsMixin.ts'
+import { LinearReadDisplayBaseMixin } from '../shared/LinearReadDisplayBaseMixin.ts'
+import {
+  calculateSvgLegendWidth,
+  getReadDisplayLegendItems,
+} from '../shared/legendUtils.ts'
 import {
   getColorSchemeMenuItem,
   getFilterByMenuItem,
-} from '../shared/menuItems'
+} from '../shared/menuItems.ts'
 
 import type { AnyConfigurationSchemaType } from '@jbrowse/core/configuration'
-import type { Instance } from 'mobx-state-tree'
+import type { Instance } from '@jbrowse/mobx-state-tree'
+import type {
+  ExportSvgDisplayOptions,
+  LegendItem,
+} from '@jbrowse/plugin-linear-genome-view'
 
 /**
  * #stateModel LinearReadArcsDisplay
@@ -34,6 +43,7 @@ function stateModelFactory(configSchema: AnyConfigurationSchemaType) {
       TrackHeightMixin(),
       FeatureDensityMixin(),
       LinearReadDisplayBaseMixin(),
+      LinearReadArcsDisplaySettingsMixin(),
       types.model({
         /**
          * #property
@@ -43,41 +53,23 @@ function stateModelFactory(configSchema: AnyConfigurationSchemaType) {
          * #property
          */
         configuration: ConfigurationReference(configSchema),
-
         /**
          * #property
-         * Width of the arc lines (thin, bold, extra bold)
          */
-        lineWidth: types.maybe(types.number),
-
-        /**
-         * #property
-         * Jitter amount for x-position to better visualize overlapping arcs
-         */
-        jitter: types.maybe(types.number),
-
-        /**
-         * #property
-         * Whether to draw inter-region vertical lines
-         */
-        drawInter: true,
-
-        /**
-         * #property
-         * Whether to draw long-range connections
-         */
-        drawLongRange: true,
+        showLegend: types.maybe(types.boolean),
       }),
     )
     .views(self => ({
       /**
        * #getter
+       * Get the color settings (from override or configuration)
        */
       get colorBy() {
         return self.colorBySetting ?? getConf(self, 'colorBy')
       },
       /**
        * #getter
+       * Get the filter settings (from override or configuration)
        */
       get filterBy() {
         return self.filterBySetting ?? getConf(self, 'filterBy')
@@ -87,56 +79,33 @@ function stateModelFactory(configSchema: AnyConfigurationSchemaType) {
       /**
        * #action
        */
+      setShowLegend(s: boolean) {
+        self.showLegend = s
+      },
+      /**
+       * #action
+       * Reload the display (clears error state)
+       */
       reload() {
         self.error = undefined
-      },
-      /**
-       * #action
-       * Toggle drawing of inter-region vertical lines
-       */
-      setDrawInter(f: boolean) {
-        self.drawInter = f
-      },
-
-      /**
-       * #action
-       * Toggle drawing of long-range connections
-       */
-      setDrawLongRange(f: boolean) {
-        self.drawLongRange = f
-      },
-
-      /**
-       * #action
-       * Set the line width (thin=1, bold=2, extrabold=5, etc)
-       */
-      setLineWidth(n: number) {
-        self.lineWidth = n
-      },
-
-      /**
-       * #action
-       * Set jitter amount for x-position
-       * Helpful to jitter the x direction so you see better evidence
-       * when e.g. 100 long reads map to same x position
-       */
-      setJitter(n: number) {
-        self.jitter = n
       },
     }))
     .views(self => ({
       /**
-       * #getter
+       * #method
+       * Returns legend items based on current colorBy setting
        */
-      get lineWidthSetting() {
-        return self.lineWidth ?? getConf(self, 'lineWidth')
+      legendItems(): LegendItem[] {
+        return getReadDisplayLegendItems(self.colorBy)
       },
 
       /**
-       * #getter
+       * #method
+       * Returns the width needed for the SVG legend if showLegend is enabled.
+       * Used by SVG export to add extra width for the legend area.
        */
-      get jitterVal(): number {
-        return self.jitter ?? getConf(self, 'jitter')
+      svgLegendWidth(): number {
+        return self.showLegend ? calculateSvgLegendWidth(this.legendItems()) : 0
       },
     }))
     .views(self => {
@@ -147,15 +116,20 @@ function stateModelFactory(configSchema: AnyConfigurationSchemaType) {
       return {
         /**
          * #method
-         * only used to tell system it's ready for export
          */
         renderProps() {
           return {
             ...superRenderProps(),
-            notReady: !self.chainData,
+            notReady: false,
+            filterBy: self.filterBy,
+            colorBy: self.colorBy,
+            drawInter: self.drawInter,
+            drawLongRange: self.drawLongRange,
+            lineWidth: self.lineWidthSetting,
+            jitter: self.jitterVal,
+            height: self.height,
           }
         },
-
         /**
          * #method
          */
@@ -216,46 +190,58 @@ function stateModelFactory(configSchema: AnyConfigurationSchemaType) {
               ],
             },
             {
-              label: 'Draw inter-region vertical lines',
-              type: 'checkbox',
-              checked: self.drawInter,
-              onClick: () => {
-                self.setDrawInter(!self.drawInter)
-              },
-            },
-            {
-              label: 'Draw long range connections',
-              type: 'checkbox',
-              checked: self.drawLongRange,
-              onClick: () => {
-                self.setDrawLongRange(!self.drawLongRange)
-              },
+              label: 'Show...',
+              type: 'subMenu',
+              subMenu: [
+                {
+                  label: 'Show legend',
+                  type: 'checkbox',
+                  checked: self.showLegend,
+                  onClick: () => {
+                    self.setShowLegend(!self.showLegend)
+                  },
+                },
+                {
+                  label:
+                    'Inter-chromosomal connections (purple vertical lines)',
+                  type: 'checkbox',
+                  checked: self.drawInter,
+                  onClick: () => {
+                    self.setDrawInter(!self.drawInter)
+                  },
+                },
+                {
+                  label: 'Long range connections (red vertical lines)',
+                  type: 'checkbox',
+                  checked: self.drawLongRange,
+                  onClick: () => {
+                    self.setDrawLongRange(!self.drawLongRange)
+                  },
+                },
+              ],
             },
             getColorSchemeMenuItem(self),
           ]
         },
+
+        /**
+         * #method
+         */
+        async renderSvg(
+          opts: ExportSvgDisplayOptions,
+        ): Promise<React.ReactNode> {
+          const { renderSvg } = await import('./renderSvg.tsx')
+          return renderSvg(self as LinearReadArcsDisplayModel, opts)
+        },
       }
     })
-    .views(self => ({
-      /**
-       * #method
-       */
-      async renderSvg(opts: {
-        rasterizeLayers?: boolean
-      }): Promise<React.ReactNode> {
-        const { renderSvg } = await import('../shared/renderSvgUtil')
-        const { drawFeats } = await import('./drawFeats')
-        return renderSvg(self as LinearReadArcsDisplayModel, opts, drawFeats)
-      },
-    }))
     .actions(self => ({
       afterAttach() {
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         ;(async () => {
           try {
-            const { doAfterAttach } = await import('../shared/afterAttach')
-            const { drawFeats } = await import('./drawFeats')
-            doAfterAttach(self, drawFeats)
+            const { doAfterAttachRPC } = await import('./afterAttachRPC.tsx')
+            doAfterAttachRPC(self)
           } catch (e) {
             console.error(e)
             self.setError(e)
@@ -263,6 +249,28 @@ function stateModelFactory(configSchema: AnyConfigurationSchemaType) {
         })()
       },
     }))
+    .postProcessSnapshot(snap => {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+      if (!snap) {
+        return snap
+      }
+      const {
+        lineWidth,
+        jitter,
+        drawInter,
+        drawLongRange,
+        showLegend,
+        ...rest
+      } = snap as Omit<typeof snap, symbol>
+      return {
+        ...rest,
+        ...(lineWidth !== undefined ? { lineWidth } : {}),
+        ...(jitter !== undefined ? { jitter } : {}),
+        ...(!drawInter ? { drawInter } : {}),
+        ...(!drawLongRange ? { drawLongRange } : {}),
+        ...(showLegend !== undefined ? { showLegend } : {}),
+      } as typeof snap
+    })
 }
 
 export type LinearReadArcsDisplayStateModel = ReturnType<

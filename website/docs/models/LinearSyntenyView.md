@@ -3,8 +3,8 @@ id: linearsyntenyview
 title: LinearSyntenyView
 ---
 
-Note: this document is automatically generated from mobx-state-tree objects in
-our source code. See
+Note: this document is automatically generated from @jbrowse/mobx-state-tree
+objects in our source code. See
 [Core concepts and intro to pluggable elements](/docs/developer_guide/) for more
 info
 
@@ -71,6 +71,54 @@ false
 drawLocationMarkers: false
 ```
 
+#### property: init
+
+used for initializing the view from a session snapshot example:
+
+```json
+{
+  "views": [
+    { "loc": "chr1:1-100", "assembly": "hg38", "tracks": ["genes"] },
+    { "loc": "chr1:1-100", "assembly": "mm39" }
+  ],
+  "tracks": ["hg38_vs_mm39_synteny"]
+}
+```
+
+```js
+// type signature
+IType<LinearSyntenyViewInit, LinearSyntenyViewInit, LinearSyntenyViewInit>
+// code
+init: types.frozen<LinearSyntenyViewInit | undefined>()
+```
+
+### LinearSyntenyView - Getters
+
+#### getter: hasSomethingToShow
+
+```js
+// type
+boolean
+```
+
+#### getter: showLoading
+
+Whether to show a loading indicator instead of the import form or view
+
+```js
+// type
+boolean
+```
+
+#### getter: showImportForm
+
+Whether to show the import form
+
+```js
+// type
+boolean
+```
+
 ### LinearSyntenyView - Methods
 
 #### method: headerMenuItems
@@ -80,14 +128,14 @@ overwhelming
 
 ```js
 // type signature
-headerMenuItems: () => (MenuDivider | MenuSubHeader | NormalMenuItem | CheckboxMenuItem | RadioMenuItem | SubMenuItem | { ...; } | { ...; } | { ...; } | { ...; })[]
+headerMenuItems: () => any[]
 ```
 
 #### method: menuItems
 
 ```js
 // type signature
-menuItems: () => (MenuDivider | MenuSubHeader | NormalMenuItem | CheckboxMenuItem | RadioMenuItem | SubMenuItem | { ...; })[]
+menuItems: () => any[]
 ```
 
 ### LinearSyntenyView - Actions
@@ -146,6 +194,13 @@ setDrawLocationMarkers: (arg: boolean) => void
 ```js
 // type signature
 showAllRegions: () => void
+```
+
+#### action: setInit
+
+```js
+// type signature
+setInit: (init?: LinearSyntenyViewInit) => void
 ```
 
 #### action: exportSvg

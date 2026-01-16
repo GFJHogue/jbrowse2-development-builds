@@ -1,11 +1,12 @@
-import SourcesGrid from './SourcesGrid'
-import SharedSetColorDialog from './ui/SetColorDialog'
+import SharedSetColorDialog from './BaseSetColorDialog.tsx'
+import SourcesGrid from './SourcesGrid.tsx'
 
-import type { Source } from '../types'
+import type { Source } from '../types.ts'
 
 interface ReducedModel {
   sources?: Source[]
-  setLayout: (s: Source[]) => void
+  clusterTree?: string
+  setLayout: (s: Source[], clearTree?: boolean) => void
   clearLayout: () => void
 }
 

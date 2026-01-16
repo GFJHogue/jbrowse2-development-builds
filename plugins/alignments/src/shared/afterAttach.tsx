@@ -1,10 +1,9 @@
 import { getContainingView } from '@jbrowse/core/util'
 
-import { createAutorun } from '../util'
-import { fetchChains } from './fetchChains'
+import { createAutorun } from '../util.ts'
 
+import type { IAnyStateTreeNode } from '@jbrowse/mobx-state-tree'
 import type { LinearGenomeViewModel } from '@jbrowse/plugin-linear-genome-view'
-import type { IAnyStateTreeNode } from 'mobx-state-tree'
 
 type LGV = LinearGenomeViewModel
 
@@ -17,14 +16,6 @@ export function doAfterAttach<T extends IAnyStateTreeNode>(
     height: number,
   ) => void,
 ) {
-  createAutorun(
-    self,
-    async () => {
-      await fetchChains(self)
-    },
-    { delay: 1000 },
-  )
-
   function draw(view: LGV) {
     const canvas = self.ref
     if (!canvas) {

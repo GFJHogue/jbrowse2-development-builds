@@ -1,5 +1,6 @@
-import type { Source } from '../../util'
-import type { WiggleDisplayModel } from '../model'
+import type { MinimalModel } from './types.ts'
+import type { Source } from '../../util.ts'
+import type { getFillProps } from '@jbrowse/core/util'
 
 const LegendItemText = function ({
   source,
@@ -7,12 +8,14 @@ const LegendItemText = function ({
   rowHeight,
   model,
   exportSVG,
+  textFillProps,
 }: {
   source: Source
   idx: number
   rowHeight: number
-  model: WiggleDisplayModel
+  model: MinimalModel
   exportSVG?: boolean
+  textFillProps: ReturnType<typeof getFillProps>
 }) {
   const { graphType, rowHeightTooSmallForScalebar, renderColorBoxes } = model
   const svgFontSize = Math.min(rowHeight, 12)
@@ -24,9 +27,10 @@ const LegendItemText = function ({
 
   return canDisplayLabel ? (
     <text
-      y={idx * rowHeight + 13}
+      y={idx * rowHeight + svgFontSize}
       x={extraOffset + colorBoxWidth + 2}
       fontSize={svgFontSize}
+      {...textFillProps}
     >
       {source.name}
     </text>

@@ -4,18 +4,19 @@ import {
   ContentBlock as ContentBlockComponent,
   ElidedBlock as ElidedBlockComponent,
   InterRegionPaddingBlock as InterRegionPaddingBlockComponent,
-} from './Block'
-import MaxHeightReached from './MaxHeightReachedIndicator'
+} from './Block.tsx'
+import MaxHeightReached from './MaxHeightReachedIndicator.tsx'
 
+import type { BlockModel } from '../models/serverSideRenderedBlock.ts'
 import type { BlockSet } from '@jbrowse/core/util/blockTypes'
 
-const RenderedBlocks = observer(function ({
+const RenderedBlocks = observer(function RenderedBlocks({
   model,
 }: {
   model: {
     id: string
     blockDefinitions: BlockSet
-    blockState: any
+    blockState: { get: (key: string) => BlockModel | undefined }
   }
 }) {
   const { blockDefinitions, blockState } = model

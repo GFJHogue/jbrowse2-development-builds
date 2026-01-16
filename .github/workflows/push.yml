@@ -7,12 +7,15 @@ on:
     tags:
       - '*'
 
+permissions:
+  contents: write
+
 jobs:
   buildjbrowseweb-development:
     name: Build jbrowse-web in development mode
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           fetch-depth: 2
           persist-credentials: false
@@ -29,21 +32,24 @@ jobs:
           )
           echo "Lastest release: $latest_release"
           echo "tag=$latest_release" >> $GITHUB_OUTPUT
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
         with:
           node-version: '22'
-      - name: Install deps (with cache)
-        uses: bahmutov/npm-install@3714964fb879ebbbc108e167f0f3a0c81ec075c9 # v1.10.10
-      - name: Build project
+          cache: 'pnpm'
+
+      - name: Install deps
+        run: pnpm install --frozen-lockfile
+
+      - name: Build jbrowse-web
         run: |
           echo $RELEASE_VERSION
           cd products/jbrowse-web/
-          NODE_OPTIONS='--max-old-space-size=6500' yarn build
-          cd ../../
-      - name: Prepare zip file
-        run: |
-          cd products/jbrowse-web/build
-          zip -r "jbrowse-web-${{steps.latest_release.outputs.tag}}.zip" .
+          NODE_OPTIONS='--max-old-space-size=6500' pnpm build
+          cd build && zip -r "jbrowse-web-${{steps.latest_release.outputs.tag}}.zip" .
+
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{steps.latest_release.outputs.tag}}-dev

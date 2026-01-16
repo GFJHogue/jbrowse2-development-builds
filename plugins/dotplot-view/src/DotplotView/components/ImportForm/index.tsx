@@ -2,6 +2,7 @@ import { useState } from 'react'
 
 import { AssemblySelector, ErrorMessage } from '@jbrowse/core/ui'
 import { getSession, isSessionWithAddTracks } from '@jbrowse/core/util'
+import { makeStyles } from '@jbrowse/core/util/tss-react'
 import {
   Button,
   Container,
@@ -12,19 +13,14 @@ import {
 } from '@mui/material'
 import { toJS, transaction } from 'mobx'
 import { observer } from 'mobx-react'
-import { makeStyles } from 'tss-react/mui'
 
-import TrackSelector from './TrackSelector'
+import TrackSelector from './TrackSelector.tsx'
 
-import type { DotplotViewModel } from '../../model'
+import type { DotplotViewModel } from '../../model.ts'
 
 const useStyles = makeStyles()(theme => ({
   importFormContainer: {
     padding: theme.spacing(4),
-    margin: '0 auto',
-  },
-  assemblySelector: {
-    width: '75%',
     margin: '0 auto',
   },
 }))
@@ -55,21 +51,10 @@ function doSubmit({
     }
 
     model.setAssemblyNames(assembly2, assembly1)
-
-    // Only show all regions if views are properly initialized
-    // Otherwise the autorun will handle it once initialization is complete
-    // if (
-    //   model.volatileWidth !== undefined &&
-    //   model.assembliesInitialized &&
-    //   model.hview.displayedRegions.length > 0 &&
-    //   model.vview.displayedRegions.length > 0
-    // ) {
-    //   model.showAllRegions()
-    // }
   })
 }
 
-const DotplotImportForm = observer(function ({
+const DotplotImportForm = observer(function DotplotImportForm({
   model,
 }: {
   model: DotplotViewModel

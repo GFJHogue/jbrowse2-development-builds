@@ -7,10 +7,10 @@ import MoreHoriz from '@mui/icons-material/MoreHoriz'
 import { Link, Tooltip } from '@mui/material'
 import { createColumnHelper } from '@tanstack/react-table'
 
-import HighlightedText from './HighlightedText'
-import StarIcon from '../StarIcon'
+import HighlightedText from './HighlightedText.tsx'
+import StarIcon from '../StarIcon.tsx'
 
-import type { LaunchCallback } from '../types'
+import type { LaunchCallback } from '../types.ts'
 
 interface Entry {
   suppressed: boolean

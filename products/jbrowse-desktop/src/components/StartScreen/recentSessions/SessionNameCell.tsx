@@ -1,14 +1,14 @@
 import { useCallback, useMemo } from 'react'
 
 import { CascadingMenuButton } from '@jbrowse/core/ui'
+import { makeStyles } from '@jbrowse/core/util/tss-react'
 import MoreHoriz from '@mui/icons-material/MoreHoriz'
 import { Link } from '@mui/material'
-import { makeStyles } from 'tss-react/mui'
 
-import StarIcon from '../StarIcon'
-import { loadPluginManager } from '../util'
+import StarIcon from '../StarIcon.tsx'
+import { loadPluginManager } from '../util.tsx'
 
-import type { RecentSessionData } from '../types'
+import type { RecentSessionData } from '../types.ts'
 import type PluginManager from '@jbrowse/core/PluginManager'
 
 const useStyles = makeStyles()({

@@ -1,19 +1,19 @@
 import { lazy, useCallback, useEffect, useRef, useState } from 'react'
 
 import { getContainingView } from '@jbrowse/core/util'
+import { makeStyles } from '@jbrowse/core/util/tss-react'
 import { transaction } from 'mobx'
 import { observer } from 'mobx-react'
-import { makeStyles } from 'tss-react/mui'
 
-import { MAX_COLOR_RANGE, getId } from '../drawSynteny'
-import SyntenyContextMenu from './SyntenyContextMenu'
-import { getTooltip, onSynClick, onSynContextClick } from './util'
+import { MAX_COLOR_RANGE, getId } from '../drawSynteny.ts'
+import SyntenyContextMenu from './SyntenyContextMenu.tsx'
+import { getTooltip, onSynClick, onSynContextClick } from './util.ts'
 
-import type { ClickCoord } from './util'
-import type { LinearSyntenyViewModel } from '../../LinearSyntenyView/model'
-import type { LinearSyntenyDisplayModel } from '../model'
+import type { ClickCoord } from './util.ts'
+import type { LinearSyntenyViewModel } from '../../LinearSyntenyView/model.ts'
+import type { LinearSyntenyDisplayModel } from '../model.ts'
 
-const SyntenyTooltip = lazy(() => import('./SyntenyTooltip'))
+const SyntenyTooltip = lazy(() => import('./SyntenyTooltip.tsx'))
 
 type Timer = ReturnType<typeof setTimeout>
 
@@ -36,7 +36,7 @@ const useStyles = makeStyles()({
   },
 })
 
-const LinearSyntenyRendering = observer(function ({
+const LinearSyntenyRendering = observer(function LinearSyntenyRendering({
   model,
 }: {
   model: LinearSyntenyDisplayModel

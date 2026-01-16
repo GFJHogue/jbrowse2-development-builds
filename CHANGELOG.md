@@ -1,4 +1,558 @@
-yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 3.7.0
+## Changes since v3.7.0 (2025-11-07)
+
+### bug
+
+- Fix smaller genomic region being shown when using &tracklist=true URL params
+  (#5388) @cmdcolin
+- Fix color by CDS / calculation of phase on BED12/bigbed files (#5384)
+  @cmdcolin
+- Fix hot module reload losing app state (#5374) @cmdcolin
+- Fix issue where multiple sub-menus could open up at once (#5308) @cmdcolin
+- Avoid changing displayed regions set when using "Center at feature" in synteny
+  view (#5281) @cmdcolin
+- Avoid 'polynomial regex' in assembly name parsing (#5258) @cmdcolin
+- Fix export of SVG hanging if track had error (#5234) @cmdcolin
+- Reduce coarseStripHTML regex complexity to address codeql warning (#5233)
+  @cmdcolin
+- Fix click-and-drag starting from a inter-region padding block (#5226)
+  @cmdcolin
+- Add cancellation stop tokens for linear read arc/cloud displays (#5221)
+  @cmdcolin
+
+### dependencies
+
+- Update to jest 30 (#5223) @cmdcolin
+
+### documentation
+
+- Add PAG 2026 user tutorial (#5340) @garrettjstevens
+
+### enhancement
+
+- Show full dotplot when zoomed all the way out (#5387) @cmdcolin
+- Switch to pnpm as package manager and add ESM "exports" to packages (#5382)
+  @cmdcolin
+- Re-organize 'track action' menu items into a submenu (#5378) @cmdcolin
+- Remove BroadcastChannel from SessionLoader (#5375) @cmdcolin
+- Allow plugins to make custom radio items for synteny import forms (#5373)
+  @cmdcolin
+- Allow easily filtering samples in the variant feature details by
+  genotype/dosage (#5366) @cmdcolin
+- Allow clicking transcript subfeatures of a gene glyph (#5363) @cmdcolin
+- Add --excludeTracks to jbrowse text-index (#5354) @cmdcolin
+- Use custom 'jexl' fork with multi-statement evaluation and template strings
+  (#5353) @cmdcolin
+- Search indexedDB for old sessions when using a local- type URL (#5346)
+  @cmdcolin
+- Filter out defaults from session snapshots (#5339) @cmdcolin
+- Add general concept for showing legends on tracks (#5337) @cmdcolin
+- Improve mouseover and clicking on mismatches/modifications on SNPCoverage
+  (#5336) @cmdcolin
+- Create layout optimizations for deep RNA-seq data (#5330) @cmdcolin
+- Filter sashimi arcs by score (#5329) @cmdcolin
+- Multiple optimizations for alignments tracks (#5326) @cmdcolin
+- Add WASM code for unzipping in CRAM, BAM, BigWig, Tabix, etc. (#5320)
+  @cmdcolin
+- Optimizations for multi-wiggle tracks (#5318) @cmdcolin
+- Add optional directional 'chevrons' to the gene glyphs (#5317) @cmdcolin
+- Collapse introns transcript selector (#5316) @cmdcolin
+- Avoid "import form flash" during loading (#5314) @cmdcolin
+- Avoid drawing tick labels that overlap block boundaries (#5312) @cmdcolin
+- Create pluggable glyph system for canvas feature renderer (#5311) @cmdcolin
+- Create optimizations for alignments track (#5310) @cmdcolin
+- Improve bigwig Y-scalebar label legibility (#5307) @cmdcolin
+- Make BAM and CRAM adapters use assembly sequence adapter (#5305) @cmdcolin
+- Add gridlines option for SVG export (#5303) @cmdcolin
+- Aggregate insertion stats in on SNP coverage track (#5301) @cmdcolin
+- Add "tiled window manager" to JBrowse apps (#5300) @cmdcolin
+- Aggregate insertion stats for tooltip (#5294) @cmdcolin
+- Simplify VCF feature descriptions (#5292) @cmdcolin
+- If &loc= is not specified in URL bar, then show all regions of the genome
+  (#5289) @cmdcolin
+- Improve track drag-n-drop re-ordering on linear genome view (#5288) @cmdcolin
+- Allow rendering inter-chromosomal contacts with Hi-C renderer (#5284)
+  @cmdcolin
+- Add better source maps in error stack trace on desktop app (#5280) @cmdcolin
+- Increase lazy loading of some react components (#5278) @cmdcolin
+- Add ability to click and mouseover RNA-seq junction arcs (#5277) @cmdcolin
+- Add ability to mouseover and click on 'insertions' on SNPCoverage track
+  (#5276) @cmdcolin
+- Refactor the renderer and RPC stack (#5270) @cmdcolin
+- Allow putting helpText on WidgetType (#5268) @cmdcolin
+- Allow rapid clicking of zoom in and out buttons (#5266) @cmdcolin
+- Use SanitizedHTML on category names (#5264) @cmdcolin
+- Improve performance of track list using custom virtualization routines (#5263)
+  @cmdcolin
+- Add ability to show longest transcript only and easily filter out gene glyphs
+  (#5259) @cmdcolin
+- Fix scrolling on multivariant display types (#5256) @cmdcolin
+- Create new 'renderingProps' concept for the 'rendering' react component as a
+  complement to 'renderProps' for renderer (#5255) @cmdcolin
+- Floating labels optimizations (#5251) @cmdcolin
+- Optimize the search box using uncontrolled component style (#5250) @cmdcolin
+- Optimizations for fast updating linear genome view scroll elements (#5249)
+  @cmdcolin
+- Refactor VcfFeature for speed and clarity (#5247) @cmdcolin
+- Use numeric encodings for SEQ and CIGAR fields for BAM (#5246) @cmdcolin
+- Allow drawing transcript subfeature labels on canvas features (#5245)
+  @cmdcolin
+- Limit showing mismatch mouseovers on alignments tracks (#5241) @cmdcolin
+- Allow clicking on mismatches and insertions on alignments track to get more
+  info (#5238) @cmdcolin
+- Add ability to draw hierarchical tree from clustering on multi-sample variant
+  view (#5236) @cmdcolin
+- Globally stop swipe action from producing back/forward actions on jbrowse-web
+  (#5229) @cmdcolin
+- Preserve old visualization during block re-rendering (#5227) @cmdcolin
+- Scroll only the matrix part of the multi-sample variant viewer (#5222)
+  @cmdcolin
+- Scroll only pileup part of the alignments track (#5220) @cmdcolin
+- Add mismatches to linked reads display, and make linked read and read arc
+  webworker rendered (#5218) @cmdcolin
+- Add 'super-compact' display mode for alignments tracks (#5217) @cmdcolin
+- Optimizations for granular rect layout (#5214) @cmdcolin
+- Add canvas based renderer for regular gene feature tracks (#5213) @cmdcolin
+- Add some micro-optimizations for gridlines and scalebar labels (#5210)
+  @cmdcolin
+- Add some help text to display types (#5207) @cmdcolin
+- Remove react-dom/server usage in webworker (#5205) @cmdcolin
+- Vendor @jbrowse/mobx-state-tree (#4938) @cmdcolin
+- Optimizations to support large tracklists (#4499) @cmdcolin
+- Save track data method on base track model (#3439) @cmdcolin
+
+### housekeeping
+
+- Create simplified browser test suite using puppeteer (#5267) @cmdcolin
+
+### internal
+
+- Use mobx-state-tree patches instead of full snapshots for undo manager (#5309)
+  @cmdcolin
+- Change JBrowse CLI to use 'fetch against the filesystem' with file:/// (#5304)
+  @cmdcolin
+- Vendor tss-react/mui dependency (#5271) @cmdcolin
+- Fix `depcheck` warnings (#5257) @cmdcolin
+- Remove use-query-params library (#5248) @cmdcolin
+- Use 'gh CLI' for release (#5235) @cmdcolin
+- Add explicit github workflow permissions (#5232) @cmdcolin
+- Remove unused makeStyles classes (#5208) @cmdcolin
+
+## Changes since v3.7.0 (2025-11-07)
+
+### bug
+
+- Fix smaller genomic region being shown when using &tracklist=true URL params
+  (#5388) @cmdcolin
+- Fix color by CDS / calculation of phase on BED12/bigbed files (#5384)
+  @cmdcolin
+- Fix hot module reload losing app state (#5374) @cmdcolin
+- Fix issue where multiple sub-menus could open up at once (#5308) @cmdcolin
+- Avoid changing displayed regions set when using "Center at feature" in synteny
+  view (#5281) @cmdcolin
+- Avoid 'polynomial regex' in assembly name parsing (#5258) @cmdcolin
+- Fix export of SVG hanging if track had error (#5234) @cmdcolin
+- Reduce coarseStripHTML regex complexity to address codeql warning (#5233)
+  @cmdcolin
+- Fix click-and-drag starting from a inter-region padding block (#5226)
+  @cmdcolin
+- Add cancellation stop tokens for linear read arc/cloud displays (#5221)
+  @cmdcolin
+
+### dependencies
+
+- Update to jest 30 (#5223) @cmdcolin
+
+### documentation
+
+- Add PAG 2026 user tutorial (#5340) @garrettjstevens
+
+### enhancement
+
+- Show full dotplot when zoomed all the way out (#5387) @cmdcolin
+- Switch to pnpm as package manager and add ESM "exports" to packages (#5382)
+  @cmdcolin
+- Re-organize 'track action' menu items into a submenu (#5378) @cmdcolin
+- Remove BroadcastChannel from SessionLoader (#5375) @cmdcolin
+- Allow plugins to make custom radio items for synteny import forms (#5373)
+  @cmdcolin
+- Allow easily filtering samples in the variant feature details by
+  genotype/dosage (#5366) @cmdcolin
+- Allow clicking transcript subfeatures of a gene glyph (#5363) @cmdcolin
+- Add --excludeTracks to jbrowse text-index (#5354) @cmdcolin
+- Use custom 'jexl' fork with multi-statement evaluation and template strings
+  (#5353) @cmdcolin
+- Search indexedDB for old sessions when using a local- type URL (#5346)
+  @cmdcolin
+- Filter out defaults from session snapshots (#5339) @cmdcolin
+- Add general concept for showing legends on tracks (#5337) @cmdcolin
+- Improve mouseover and clicking on mismatches/modifications on SNPCoverage
+  (#5336) @cmdcolin
+- Create layout optimizations for deep RNA-seq data (#5330) @cmdcolin
+- Filter sashimi arcs by score (#5329) @cmdcolin
+- Multiple optimizations for alignments tracks (#5326) @cmdcolin
+- Add WASM code for unzipping in CRAM, BAM, BigWig, Tabix, etc. (#5320)
+  @cmdcolin
+- Optimizations for multi-wiggle tracks (#5318) @cmdcolin
+- Add optional directional 'chevrons' to the gene glyphs (#5317) @cmdcolin
+- Collapse introns transcript selector (#5316) @cmdcolin
+- Avoid "import form flash" during loading (#5314) @cmdcolin
+- Avoid drawing tick labels that overlap block boundaries (#5312) @cmdcolin
+- Create pluggable glyph system for canvas feature renderer (#5311) @cmdcolin
+- Create optimizations for alignments track (#5310) @cmdcolin
+- Improve bigwig Y-scalebar label legibility (#5307) @cmdcolin
+- Make BAM and CRAM adapters use assembly sequence adapter (#5305) @cmdcolin
+- Add gridlines option for SVG export (#5303) @cmdcolin
+- Aggregate insertion stats in on SNP coverage track (#5301) @cmdcolin
+- Add "tiled window manager" to JBrowse apps (#5300) @cmdcolin
+- Aggregate insertion stats for tooltip (#5294) @cmdcolin
+- Simplify VCF feature descriptions (#5292) @cmdcolin
+- If &loc= is not specified in URL bar, then show all regions of the genome
+  (#5289) @cmdcolin
+- Improve track drag-n-drop re-ordering on linear genome view (#5288) @cmdcolin
+- Allow rendering inter-chromosomal contacts with Hi-C renderer (#5284)
+  @cmdcolin
+- Add better source maps in error stack trace on desktop app (#5280) @cmdcolin
+- Increase lazy loading of some react components (#5278) @cmdcolin
+- Add ability to click and mouseover RNA-seq junction arcs (#5277) @cmdcolin
+- Add ability to mouseover and click on 'insertions' on SNPCoverage track
+  (#5276) @cmdcolin
+- Refactor the renderer and RPC stack (#5270) @cmdcolin
+- Allow putting helpText on WidgetType (#5268) @cmdcolin
+- Allow rapid clicking of zoom in and out buttons (#5266) @cmdcolin
+- Use SanitizedHTML on category names (#5264) @cmdcolin
+- Improve performance of track list using custom virtualization routines (#5263)
+  @cmdcolin
+- Add ability to show longest transcript only and easily filter out gene glyphs
+  (#5259) @cmdcolin
+- Fix scrolling on multivariant display types (#5256) @cmdcolin
+- Create new 'renderingProps' concept for the 'rendering' react component as a
+  complement to 'renderProps' for renderer (#5255) @cmdcolin
+- Floating labels optimizations (#5251) @cmdcolin
+- Optimize the search box using uncontrolled component style (#5250) @cmdcolin
+- Optimizations for fast updating linear genome view scroll elements (#5249)
+  @cmdcolin
+- Refactor VcfFeature for speed and clarity (#5247) @cmdcolin
+- Use numeric encodings for SEQ and CIGAR fields for BAM (#5246) @cmdcolin
+- Allow drawing transcript subfeature labels on canvas features (#5245)
+  @cmdcolin
+- Limit showing mismatch mouseovers on alignments tracks (#5241) @cmdcolin
+- Allow clicking on mismatches and insertions on alignments track to get more
+  info (#5238) @cmdcolin
+- Add ability to draw hierarchical tree from clustering on multi-sample variant
+  view (#5236) @cmdcolin
+- Globally stop swipe action from producing back/forward actions on jbrowse-web
+  (#5229) @cmdcolin
+- Preserve old visualization during block re-rendering (#5227) @cmdcolin
+- Scroll only the matrix part of the multi-sample variant viewer (#5222)
+  @cmdcolin
+- Scroll only pileup part of the alignments track (#5220) @cmdcolin
+- Add mismatches to linked reads display, and make linked read and read arc
+  webworker rendered (#5218) @cmdcolin
+- Add 'super-compact' display mode for alignments tracks (#5217) @cmdcolin
+- Optimizations for granular rect layout (#5214) @cmdcolin
+- Add canvas based renderer for regular gene feature tracks (#5213) @cmdcolin
+- Add some micro-optimizations for gridlines and scalebar labels (#5210)
+  @cmdcolin
+- Add some help text to display types (#5207) @cmdcolin
+- Remove react-dom/server usage in webworker (#5205) @cmdcolin
+- Vendor @jbrowse/mobx-state-tree (#4938) @cmdcolin
+- Optimizations to support large tracklists (#4499) @cmdcolin
+- Save track data method on base track model (#3439) @cmdcolin
+
+### housekeeping
+
+- Create simplified browser test suite using puppeteer (#5267) @cmdcolin
+
+### internal
+
+- Use mobx-state-tree patches instead of full snapshots for undo manager (#5309)
+  @cmdcolin
+- Change JBrowse CLI to use 'fetch against the filesystem' with file:/// (#5304)
+  @cmdcolin
+- Vendor tss-react/mui dependency (#5271) @cmdcolin
+- Fix `depcheck` warnings (#5257) @cmdcolin
+- Remove use-query-params library (#5248) @cmdcolin
+- Use 'gh CLI' for release (#5235) @cmdcolin
+- Add explicit github workflow permissions (#5232) @cmdcolin
+- Remove unused makeStyles classes (#5208) @cmdcolin
+
+## Changes since v3.7.0 (2025-11-07)
+
+### bug
+
+- Fix smaller genomic region being shown when using &tracklist=true URL params
+  (#5388) @cmdcolin
+- Fix color by CDS / calculation of phase on BED12/bigbed files (#5384)
+  @cmdcolin
+- Fix hot module reload losing app state (#5374) @cmdcolin
+- Fix issue where multiple sub-menus could open up at once (#5308) @cmdcolin
+- Avoid changing displayed regions set when using "Center at feature" in synteny
+  view (#5281) @cmdcolin
+- Avoid 'polynomial regex' in assembly name parsing (#5258) @cmdcolin
+- Fix export of SVG hanging if track had error (#5234) @cmdcolin
+- Reduce coarseStripHTML regex complexity to address codeql warning (#5233)
+  @cmdcolin
+- Fix click-and-drag starting from a inter-region padding block (#5226)
+  @cmdcolin
+- Add cancellation stop tokens for linear read arc/cloud displays (#5221)
+  @cmdcolin
+
+### dependencies
+
+- Update to jest 30 (#5223) @cmdcolin
+
+### documentation
+
+- Add PAG 2026 user tutorial (#5340) @garrettjstevens
+
+### enhancement
+
+- Show full dotplot when zoomed all the way out (#5387) @cmdcolin
+- Switch to pnpm as package manager and add ESM "exports" to packages (#5382)
+  @cmdcolin
+- Re-organize 'track action' menu items into a submenu (#5378) @cmdcolin
+- Remove BroadcastChannel from SessionLoader (#5375) @cmdcolin
+- Allow plugins to make custom radio items for synteny import forms (#5373)
+  @cmdcolin
+- Allow easily filtering samples in the variant feature details by
+  genotype/dosage (#5366) @cmdcolin
+- Allow clicking transcript subfeatures of a gene glyph (#5363) @cmdcolin
+- Add --excludeTracks to jbrowse text-index (#5354) @cmdcolin
+- Use custom 'jexl' fork with multi-statement evaluation and template strings
+  (#5353) @cmdcolin
+- Search indexedDB for old sessions when using a local- type URL (#5346)
+  @cmdcolin
+- Filter out defaults from session snapshots (#5339) @cmdcolin
+- Add general concept for showing legends on tracks (#5337) @cmdcolin
+- Improve mouseover and clicking on mismatches/modifications on SNPCoverage
+  (#5336) @cmdcolin
+- Create layout optimizations for deep RNA-seq data (#5330) @cmdcolin
+- Filter sashimi arcs by score (#5329) @cmdcolin
+- Multiple optimizations for alignments tracks (#5326) @cmdcolin
+- Add WASM code for unzipping in CRAM, BAM, BigWig, Tabix, etc. (#5320)
+  @cmdcolin
+- Optimizations for multi-wiggle tracks (#5318) @cmdcolin
+- Add optional directional 'chevrons' to the gene glyphs (#5317) @cmdcolin
+- Collapse introns transcript selector (#5316) @cmdcolin
+- Avoid "import form flash" during loading (#5314) @cmdcolin
+- Avoid drawing tick labels that overlap block boundaries (#5312) @cmdcolin
+- Create pluggable glyph system for canvas feature renderer (#5311) @cmdcolin
+- Create optimizations for alignments track (#5310) @cmdcolin
+- Improve bigwig Y-scalebar label legibility (#5307) @cmdcolin
+- Make BAM and CRAM adapters use assembly sequence adapter (#5305) @cmdcolin
+- Add gridlines option for SVG export (#5303) @cmdcolin
+- Aggregate insertion stats in on SNP coverage track (#5301) @cmdcolin
+- Add "tiled window manager" to JBrowse apps (#5300) @cmdcolin
+- Aggregate insertion stats for tooltip (#5294) @cmdcolin
+- Simplify VCF feature descriptions (#5292) @cmdcolin
+- If &loc= is not specified in URL bar, then show all regions of the genome
+  (#5289) @cmdcolin
+- Improve track drag-n-drop re-ordering on linear genome view (#5288) @cmdcolin
+- Allow rendering inter-chromosomal contacts with Hi-C renderer (#5284)
+  @cmdcolin
+- Add better source maps in error stack trace on desktop app (#5280) @cmdcolin
+- Increase lazy loading of some react components (#5278) @cmdcolin
+- Add ability to click and mouseover RNA-seq junction arcs (#5277) @cmdcolin
+- Add ability to mouseover and click on 'insertions' on SNPCoverage track
+  (#5276) @cmdcolin
+- Refactor the renderer and RPC stack (#5270) @cmdcolin
+- Allow putting helpText on WidgetType (#5268) @cmdcolin
+- Allow rapid clicking of zoom in and out buttons (#5266) @cmdcolin
+- Use SanitizedHTML on category names (#5264) @cmdcolin
+- Improve performance of track list using custom virtualization routines (#5263)
+  @cmdcolin
+- Add ability to show longest transcript only and easily filter out gene glyphs
+  (#5259) @cmdcolin
+- Fix scrolling on multivariant display types (#5256) @cmdcolin
+- Create new 'renderingProps' concept for the 'rendering' react component as a
+  complement to 'renderProps' for renderer (#5255) @cmdcolin
+- Floating labels optimizations (#5251) @cmdcolin
+- Optimize the search box using uncontrolled component style (#5250) @cmdcolin
+- Optimizations for fast updating linear genome view scroll elements (#5249)
+  @cmdcolin
+- Refactor VcfFeature for speed and clarity (#5247) @cmdcolin
+- Use numeric encodings for SEQ and CIGAR fields for BAM (#5246) @cmdcolin
+- Allow drawing transcript subfeature labels on canvas features (#5245)
+  @cmdcolin
+- Limit showing mismatch mouseovers on alignments tracks (#5241) @cmdcolin
+- Allow clicking on mismatches and insertions on alignments track to get more
+  info (#5238) @cmdcolin
+- Add ability to draw hierarchical tree from clustering on multi-sample variant
+  view (#5236) @cmdcolin
+- Globally stop swipe action from producing back/forward actions on jbrowse-web
+  (#5229) @cmdcolin
+- Preserve old visualization during block re-rendering (#5227) @cmdcolin
+- Scroll only the matrix part of the multi-sample variant viewer (#5222)
+  @cmdcolin
+- Scroll only pileup part of the alignments track (#5220) @cmdcolin
+- Add mismatches to linked reads display, and make linked read and read arc
+  webworker rendered (#5218) @cmdcolin
+- Add 'super-compact' display mode for alignments tracks (#5217) @cmdcolin
+- Optimizations for granular rect layout (#5214) @cmdcolin
+- Add canvas based renderer for regular gene feature tracks (#5213) @cmdcolin
+- Add some micro-optimizations for gridlines and scalebar labels (#5210)
+  @cmdcolin
+- Add some help text to display types (#5207) @cmdcolin
+- Remove react-dom/server usage in webworker (#5205) @cmdcolin
+- Vendor @jbrowse/mobx-state-tree (#4938) @cmdcolin
+- Optimizations to support large tracklists (#4499) @cmdcolin
+- Save track data method on base track model (#3439) @cmdcolin
+
+### housekeeping
+
+- Create simplified browser test suite using puppeteer (#5267) @cmdcolin
+
+### internal
+
+- Use mobx-state-tree patches instead of full snapshots for undo manager (#5309)
+  @cmdcolin
+- Change JBrowse CLI to use 'fetch against the filesystem' with file:/// (#5304)
+  @cmdcolin
+- Vendor tss-react/mui dependency (#5271) @cmdcolin
+- Fix `depcheck` warnings (#5257) @cmdcolin
+- Remove use-query-params library (#5248) @cmdcolin
+- Use 'gh CLI' for release (#5235) @cmdcolin
+- Add explicit github workflow permissions (#5232) @cmdcolin
+- Remove unused makeStyles classes (#5208) @cmdcolin
+
+## Changes since v3.7.0 (2025-11-07)
+
+### bug
+
+- Fix smaller genomic region being shown when using &tracklist=true URL params
+  (#5388) @cmdcolin
+- Fix color by CDS / calculation of phase on BED12/bigbed files (#5384)
+  @cmdcolin
+- Fix hot module reload losing app state (#5374) @cmdcolin
+- Fix issue where multiple sub-menus could open up at once (#5308) @cmdcolin
+- Avoid changing displayed regions set when using "Center at feature" in synteny
+  view (#5281) @cmdcolin
+- Avoid 'polynomial regex' in assembly name parsing (#5258) @cmdcolin
+- Fix export of SVG hanging if track had error (#5234) @cmdcolin
+- Reduce coarseStripHTML regex complexity to address codeql warning (#5233)
+  @cmdcolin
+- Fix click-and-drag starting from a inter-region padding block (#5226)
+  @cmdcolin
+- Add cancellation stop tokens for linear read arc/cloud displays (#5221)
+  @cmdcolin
+
+### dependencies
+
+- Update to jest 30 (#5223) @cmdcolin
+
+### documentation
+
+- Add PAG 2026 user tutorial (#5340) @garrettjstevens
+
+### enhancement
+
+- Show full dotplot when zoomed all the way out (#5387) @cmdcolin
+- Switch to pnpm as package manager and add ESM "exports" to packages (#5382)
+  @cmdcolin
+- Re-organize 'track action' menu items into a submenu (#5378) @cmdcolin
+- Remove BroadcastChannel from SessionLoader (#5375) @cmdcolin
+- Allow plugins to make custom radio items for synteny import forms (#5373)
+  @cmdcolin
+- Allow easily filtering samples in the variant feature details by
+  genotype/dosage (#5366) @cmdcolin
+- Allow clicking transcript subfeatures of a gene glyph (#5363) @cmdcolin
+- Add --excludeTracks to jbrowse text-index (#5354) @cmdcolin
+- Use custom 'jexl' fork with multi-statement evaluation and template strings
+  (#5353) @cmdcolin
+- Search indexedDB for old sessions when using a local- type URL (#5346)
+  @cmdcolin
+- Filter out defaults from session snapshots (#5339) @cmdcolin
+- Add general concept for showing legends on tracks (#5337) @cmdcolin
+- Improve mouseover and clicking on mismatches/modifications on SNPCoverage
+  (#5336) @cmdcolin
+- Create layout optimizations for deep RNA-seq data (#5330) @cmdcolin
+- Filter sashimi arcs by score (#5329) @cmdcolin
+- Multiple optimizations for alignments tracks (#5326) @cmdcolin
+- Add WASM code for unzipping in CRAM, BAM, BigWig, Tabix, etc. (#5320)
+  @cmdcolin
+- Optimizations for multi-wiggle tracks (#5318) @cmdcolin
+- Add optional directional 'chevrons' to the gene glyphs (#5317) @cmdcolin
+- Collapse introns transcript selector (#5316) @cmdcolin
+- Avoid "import form flash" during loading (#5314) @cmdcolin
+- Avoid drawing tick labels that overlap block boundaries (#5312) @cmdcolin
+- Create pluggable glyph system for canvas feature renderer (#5311) @cmdcolin
+- Create optimizations for alignments track (#5310) @cmdcolin
+- Improve bigwig Y-scalebar label legibility (#5307) @cmdcolin
+- Make BAM and CRAM adapters use assembly sequence adapter (#5305) @cmdcolin
+- Add gridlines option for SVG export (#5303) @cmdcolin
+- Aggregate insertion stats in on SNP coverage track (#5301) @cmdcolin
+- Add "tiled window manager" to JBrowse apps (#5300) @cmdcolin
+- Aggregate insertion stats for tooltip (#5294) @cmdcolin
+- Simplify VCF feature descriptions (#5292) @cmdcolin
+- If &loc= is not specified in URL bar, then show all regions of the genome
+  (#5289) @cmdcolin
+- Improve track drag-n-drop re-ordering on linear genome view (#5288) @cmdcolin
+- Allow rendering inter-chromosomal contacts with Hi-C renderer (#5284)
+  @cmdcolin
+- Add better source maps in error stack trace on desktop app (#5280) @cmdcolin
+- Increase lazy loading of some react components (#5278) @cmdcolin
+- Add ability to click and mouseover RNA-seq junction arcs (#5277) @cmdcolin
+- Add ability to mouseover and click on 'insertions' on SNPCoverage track
+  (#5276) @cmdcolin
+- Refactor the renderer and RPC stack (#5270) @cmdcolin
+- Allow putting helpText on WidgetType (#5268) @cmdcolin
+- Allow rapid clicking of zoom in and out buttons (#5266) @cmdcolin
+- Use SanitizedHTML on category names (#5264) @cmdcolin
+- Improve performance of track list using custom virtualization routines (#5263)
+  @cmdcolin
+- Add ability to show longest transcript only and easily filter out gene glyphs
+  (#5259) @cmdcolin
+- Fix scrolling on multivariant display types (#5256) @cmdcolin
+- Create new 'renderingProps' concept for the 'rendering' react component as a
+  complement to 'renderProps' for renderer (#5255) @cmdcolin
+- Floating labels optimizations (#5251) @cmdcolin
+- Optimize the search box using uncontrolled component style (#5250) @cmdcolin
+- Optimizations for fast updating linear genome view scroll elements (#5249)
+  @cmdcolin
+- Refactor VcfFeature for speed and clarity (#5247) @cmdcolin
+- Use numeric encodings for SEQ and CIGAR fields for BAM (#5246) @cmdcolin
+- Allow drawing transcript subfeature labels on canvas features (#5245)
+  @cmdcolin
+- Limit showing mismatch mouseovers on alignments tracks (#5241) @cmdcolin
+- Allow clicking on mismatches and insertions on alignments track to get more
+  info (#5238) @cmdcolin
+- Add ability to draw hierarchical tree from clustering on multi-sample variant
+  view (#5236) @cmdcolin
+- Globally stop swipe action from producing back/forward actions on jbrowse-web
+  (#5229) @cmdcolin
+- Preserve old visualization during block re-rendering (#5227) @cmdcolin
+- Scroll only the matrix part of the multi-sample variant viewer (#5222)
+  @cmdcolin
+- Scroll only pileup part of the alignments track (#5220) @cmdcolin
+- Add mismatches to linked reads display, and make linked read and read arc
+  webworker rendered (#5218) @cmdcolin
+- Add 'super-compact' display mode for alignments tracks (#5217) @cmdcolin
+- Optimizations for granular rect layout (#5214) @cmdcolin
+- Add canvas based renderer for regular gene feature tracks (#5213) @cmdcolin
+- Add some micro-optimizations for gridlines and scalebar labels (#5210)
+  @cmdcolin
+- Add some help text to display types (#5207) @cmdcolin
+- Remove react-dom/server usage in webworker (#5205) @cmdcolin
+- Vendor @jbrowse/mobx-state-tree (#4938) @cmdcolin
+- Optimizations to support large tracklists (#4499) @cmdcolin
+- Save track data method on base track model (#3439) @cmdcolin
+
+### housekeeping
+
+- Create simplified browser test suite using puppeteer (#5267) @cmdcolin
+
+### internal
+
+- Use mobx-state-tree patches instead of full snapshots for undo manager (#5309)
+  @cmdcolin
+- Change JBrowse CLI to use 'fetch against the filesystem' with file:/// (#5304)
+  @cmdcolin
+- Vendor tss-react/mui dependency (#5271) @cmdcolin
+- Fix `depcheck` warnings (#5257) @cmdcolin
+- Remove use-query-params library (#5248) @cmdcolin
+- Use 'gh CLI' for release (#5235) @cmdcolin
+- Add explicit github workflow permissions (#5232) @cmdcolin
+- Remove unused makeStyles classes (#5208) @cmdcolin
 
 ## 3.7.0 (2025-11-07)
 
@@ -89,8 +643,6 @@ yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 3.7.0
 - Garrett Stevens ([@garrettjstevens](https://github.com/garrettjstevens)) Done
   in 2.38s.
 
-yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 3.6.5
-
 ## 3.6.5 (2025-09-11)
 
 #### :rocket: Enhancement
@@ -132,8 +684,6 @@ yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 3.6.5
 - Garrett Stevens ([@garrettjstevens](https://github.com/garrettjstevens)) Done
   in 1.40s.
 
-yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 3.6.4
-
 ## 3.6.4 (2025-07-21)
 
 #### :rocket: Enhancement
@@ -174,19 +724,11 @@ yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 3.6.4
 - Garrett Stevens ([@garrettjstevens](https://github.com/garrettjstevens)) Done
   in 1.54s.
 
-yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 3.6.3
-
 Done in 0.81s.
-
-yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 3.6.2
 
 Done in 0.54s.
 
-yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 3.6.1
-
 Done in 0.53s.
-
-yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 3.6.0
 
 ## 3.6.0 (2025-07-10)
 
@@ -251,8 +793,6 @@ yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 3.6.0
 
 - Colin Diesh ([@cmdcolin](https://github.com/cmdcolin))
 - Will Haese-Hill ([@haessar](https://github.com/haessar)) Done in 1.34s.
-
-yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 3.5.1
 
 ## 3.5.1 (2025-06-05)
 
@@ -322,8 +862,6 @@ yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 3.5.1
 - Garrett Stevens ([@garrettjstevens](https://github.com/garrettjstevens)) Done
   in 1.94s.
 
-yarn run v1.22.18 $ lerna-changelog --silent --silent --next-version 3.5.0
-
 ## 3.5.0 (2025-05-27)
 
 #### :rocket: Enhancement
@@ -371,8 +909,6 @@ yarn run v1.22.18 $ lerna-changelog --silent --silent --next-version 3.5.0
 - Colin Diesh ([@cmdcolin](https://github.com/cmdcolin))
 - Garrett Stevens ([@garrettjstevens](https://github.com/garrettjstevens)) Done
   in 1.78s.
-
-yarn run v1.22.18 $ lerna-changelog --silent --silent --next-version 3.4.0
 
 ## 3.4.0 (2025-05-13)
 
@@ -471,8 +1007,6 @@ yarn run v1.22.18 $ lerna-changelog --silent --silent --next-version 3.4.0
 - Garrett Stevens ([@garrettjstevens](https://github.com/garrettjstevens)) Done
   in 1.68s.
 
-yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 3.3.0
-
 ## 3.3.0 (2025-04-18)
 
 #### :rocket: Enhancement
@@ -541,8 +1075,6 @@ yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 3.3.0
 
 - Colin Diesh ([@cmdcolin](https://github.com/cmdcolin)) Done in 1.41s.
 
-yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 3.2.0
-
 ## 3.2.0 (2025-03-22)
 
 #### :rocket: Enhancement
@@ -590,8 +1122,6 @@ yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 3.2.0
 
 - Colin Diesh ([@cmdcolin](https://github.com/cmdcolin)) Done in 1.00s.
 
-yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 3.1.0
-
 ## 3.1.0 (2025-03-14)
 
 #### :rocket: Enhancement
@@ -636,8 +1166,6 @@ yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 3.1.0
 - Garrett Stevens ([@garrettjstevens](https://github.com/garrettjstevens)) Done
   in 1.07s.
 
-yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 3.0.5
-
 ## 3.0.5 (2025-03-04)
 
 #### :bug: Bug Fix
@@ -648,8 +1176,6 @@ yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 3.0.5
 #### Committers: 1
 
 - Colin Diesh ([@cmdcolin](https://github.com/cmdcolin)) Done in 1.24s.
-
-yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 3.0.4
 
 ## 3.0.4 (2025-03-01)
 
@@ -706,11 +1232,7 @@ yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 3.0.4
 
 - Colin Diesh ([@cmdcolin](https://github.com/cmdcolin)) Done in 1.14s.
 
-yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 3.0.3
-
 Done in 0.44s.
-
-yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 3.0.2
 
 ## 3.0.2 (2025-02-13)
 
@@ -778,11 +1300,7 @@ yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 3.0.2
 - Garrett Stevens ([@garrettjstevens](https://github.com/garrettjstevens)) Done
   in 1.91s.
 
-yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 3.0.1
-
 Done in 0.69s.
-
-yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 3.0.0
 
 ## 3.0.0 (2025-01-29)
 
@@ -913,8 +1431,6 @@ yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 3.0.0
 - Kim Rutherford ([@kimrutherford](https://github.com/kimrutherford)) Done in
   2.19s.
 
-yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 2.18.0
-
 ## 2.18.0 (2024-12-10)
 
 #### :rocket: Enhancement
@@ -988,8 +1504,6 @@ yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 2.18.0
 
 - Colin Diesh ([@cmdcolin](https://github.com/cmdcolin)) Done in 1.52s.
 
-yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 2.17.0
-
 ## 2.17.0 (2024-11-18)
 
 #### :rocket: Enhancement
@@ -1037,8 +1551,6 @@ yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 2.17.0
 - Garrett Stevens ([@garrettjstevens](https://github.com/garrettjstevens)) Done
   in 1.81s.
 
-yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 2.16.1
-
 ## 2.16.1 (2024-11-03)
 
 #### :rocket: Enhancement
@@ -1079,8 +1591,6 @@ yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 2.16.1
 #### Committers: 1
 
 - Colin Diesh ([@cmdcolin](https://github.com/cmdcolin)) Done in 1.20s.
-
-yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 2.16.0
 
 ## 2.16.0 (2024-10-23)
 
@@ -1138,8 +1648,6 @@ yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 2.16.0
 
 - Colin Diesh ([@cmdcolin](https://github.com/cmdcolin)) Done in 1.02s.
 
-yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 2.15.4
-
 ## 2.15.4 (2024-09-20)
 
 #### :bug: Bug Fix
@@ -1155,11 +1663,7 @@ yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 2.15.4
 
 - Colin Diesh ([@cmdcolin](https://github.com/cmdcolin)) Done in 1.22s.
 
-yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 2.15.3
-
 Done in 0.57s.
-
-yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 2.15.2
 
 ## 2.15.2 (2024-09-18)
 
@@ -1184,8 +1688,6 @@ yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 2.15.2
 #### Committers: 1
 
 - Colin Diesh ([@cmdcolin](https://github.com/cmdcolin)) Done in 1.30s.
-
-yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 2.15.1
 
 ## 2.15.1 (2024-09-12)
 
@@ -1227,11 +1729,7 @@ yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 2.15.1
 
 - Colin Diesh ([@cmdcolin](https://github.com/cmdcolin)) Done in 1.16s.
 
-yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 2.15.0
-
 Done in 1.26s.
-
-yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 2.14.0
 
 ## 2.14.0 (2024-08-28)
 
@@ -1296,8 +1794,6 @@ yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 2.14.0
 - Garrett Stevens ([@garrettjstevens](https://github.com/garrettjstevens)) Done
   in 1.30s.
 
-yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 2.13.1
-
 ## 2.13.1 (2024-07-31)
 
 #### :rocket: Enhancement
@@ -1316,8 +1812,6 @@ yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 2.13.1
 #### Committers: 1
 
 - Colin Diesh ([@cmdcolin](https://github.com/cmdcolin)) Done in 1.30s.
-
-yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 2.13.0
 
 ## 2.13.0 (2024-07-25)
 
@@ -1373,8 +1867,6 @@ yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 2.13.0
 - Colin Diesh ([@cmdcolin](https://github.com/cmdcolin))
 - [@Maarten-vd-Sande](https://github.com/Maarten-vd-Sande) Done in 1.66s.
 
-yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 2.12.3
-
 ## 2.12.3 (2024-06-27)
 
 #### :rocket: Enhancement
@@ -1402,15 +1894,9 @@ yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 2.12.3
 
 - Colin Diesh ([@cmdcolin](https://github.com/cmdcolin)) Done in 1.30s.
 
-yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 2.12.2
-
 Done in 0.74s.
 
-yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 2.12.1
-
 Done in 0.81s.
-
-yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 2.12.0
 
 ## 2.12.0 (2024-06-20)
 
@@ -1498,8 +1984,6 @@ yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 2.12.0
 - Caroline Bridge ([@carolinebridge](https://github.com/carolinebridge))
 - Colin Diesh ([@cmdcolin](https://github.com/cmdcolin)) Done in 1.71s.
 
-yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 2.11.2
-
 ## 2.11.2 (2024-06-03)
 
 #### :rocket: Enhancement
@@ -1545,8 +2029,6 @@ yarn run v1.22.22 $ lerna-changelog --silent --silent --next-version 2.11.2
 - Garrett Stevens ([@garrettjstevens](https://github.com/garrettjstevens)) Done
   in 1.23s.
 
-yarn run v1.22.19 $ lerna-changelog --silent --silent --next-version 2.11.1
-
 ## 2.11.1 (2024-05-11)
 
 #### :rocket: Enhancement
@@ -1588,8 +2070,6 @@ yarn run v1.22.19 $ lerna-changelog --silent --silent --next-version 2.11.1
 #### Committers: 1
 
 - Colin Diesh ([@cmdcolin](https://github.com/cmdcolin)) Done in 1.13s.
-
-yarn run v1.22.19 $ lerna-changelog --silent --silent --next-version 2.11.0
 
 ## 2.11.0 (2024-04-16)
 
@@ -1669,8 +2149,6 @@ yarn run v1.22.19 $ lerna-changelog --silent --silent --next-version 2.11.0
 - Garrett Stevens ([@garrettjstevens](https://github.com/garrettjstevens)) Done
   in 1.85s.
 
-yarn run v1.22.19 $ lerna-changelog --silent --silent --next-version 2.10.3
-
 ## 2.10.3 (2024-03-06)
 
 #### :rocket: Enhancement
@@ -1718,8 +2196,6 @@ yarn run v1.22.19 $ lerna-changelog --silent --silent --next-version 2.10.3
 - Garrett Stevens ([@garrettjstevens](https://github.com/garrettjstevens))
 - Quentin Agren ([@kwentine](https://github.com/kwentine))
 - [@Maarten-vd-Sande](https://github.com/Maarten-vd-Sande) Done in 1.56s.
-
-yarn run v1.22.19 $ lerna-changelog --silent --silent --next-version 2.10.2
 
 ## 2.10.2 (2024-02-19)
 
@@ -1775,8 +2251,6 @@ yarn run v1.22.19 $ lerna-changelog --silent --silent --next-version 2.10.2
 
 - Colin Diesh ([@cmdcolin](https://github.com/cmdcolin)) Done in 1.42s.
 
-yarn run v1.22.19 $ lerna-changelog --silent --silent --next-version 2.10.1
-
 ## 2.10.1 (2024-01-09)
 
 #### :rocket: Enhancement
@@ -1813,8 +2287,6 @@ yarn run v1.22.19 $ lerna-changelog --silent --silent --next-version 2.10.1
 
 - Colin Diesh ([@cmdcolin](https://github.com/cmdcolin))
 - Drew T. Doering ([@dtdoering](https://github.com/dtdoering)) Done in 3.10s.
-
-yarn run v1.22.19 $ lerna-changelog --silent --silent --next-version 2.10.0
 
 ## 2.10.0 (2023-12-15)
 
@@ -1888,8 +2360,6 @@ yarn run v1.22.19 $ lerna-changelog --silent --silent --next-version 2.10.0
   ([@carolinebridge-oicr](https://github.com/carolinebridge-oicr))
 - Colin Diesh ([@cmdcolin](https://github.com/cmdcolin)) Done in 2.06s.
 
-yarn run v1.22.19 $ lerna-changelog --silent --silent --next-version 2.9.0
-
 ## 2.9.0 (2023-11-30)
 
 #### :rocket: Enhancement
@@ -1946,8 +2416,6 @@ yarn run v1.22.19 $ lerna-changelog --silent --silent --next-version 2.9.0
   ([@carolinebridge-oicr](https://github.com/carolinebridge-oicr))
 - Colin Diesh ([@cmdcolin](https://github.com/cmdcolin)) Done in 1.41s.
 
-yarn run v1.22.19 $ lerna-changelog --silent --next-version 2.8.0
-
 ## 2.8.0 (2023-11-09)
 
 #### :rocket: Enhancement
@@ -1998,8 +2466,6 @@ yarn run v1.22.19 $ lerna-changelog --silent --next-version 2.8.0
   ([@carolinebridge-oicr](https://github.com/carolinebridge-oicr))
 - Colin Diesh ([@cmdcolin](https://github.com/cmdcolin)) Done in 2.23s.
 
-yarn run v1.22.19 $ lerna-changelog --silent --next-version 2.7.2
-
 ## 2.7.2 (2023-10-27)
 
 #### :rocket: Enhancement
@@ -2047,8 +2513,6 @@ yarn run v1.22.19 $ lerna-changelog --silent --next-version 2.7.2
 - Garrett Stevens ([@garrettjstevens](https://github.com/garrettjstevens)) Done
   in 1.56s.
 
-yarn run v1.22.19 $ lerna-changelog --silent --next-version 2.7.1
-
 ## 2.7.1 (2023-10-18)
 
 #### :rocket: Enhancement
@@ -2083,8 +2547,6 @@ yarn run v1.22.19 $ lerna-changelog --silent --next-version 2.7.1
 #### Committers: 1
 
 - Colin Diesh ([@cmdcolin](https://github.com/cmdcolin)) Done in 1.65s.
-
-yarn run v1.22.18 $ lerna-changelog --next-version 2.7.0
 
 ## 2.7.0 (2023-10-04)
 
@@ -2233,8 +2695,6 @@ yarn run v1.22.18 $ lerna-changelog --next-version 2.7.0
 - Garrett Stevens ([@garrettjstevens](https://github.com/garrettjstevens))
 - Scott Cain ([@scottcain](https://github.com/scottcain)) Done in 2.80s.
 
-yarn run v1.22.18 $ lerna-changelog 2.6.3
-
 #### :rocket: Enhancement
 
 - Other
@@ -2286,8 +2746,6 @@ yarn run v1.22.18 $ lerna-changelog 2.6.3
   ([@carolinebridge-oicr](https://github.com/carolinebridge-oicr))
 - Colin Diesh ([@cmdcolin](https://github.com/cmdcolin))
 - Robert Buels ([@rbuels](https://github.com/rbuels)) Done in 1.50s.
-
-yarn run v1.22.18 $ lerna-changelog 2.6.2
 
 #### :rocket: Enhancement
 
@@ -2347,8 +2805,6 @@ yarn run v1.22.18 $ lerna-changelog 2.6.2
 - Colin Diesh ([@cmdcolin](https://github.com/cmdcolin))
 - Garrett Stevens ([@garrettjstevens](https://github.com/garrettjstevens)) Done
   in 1.55s.
-
-yarn run v1.22.18 $ lerna-changelog 2.6.1
 
 #### :rocket: Enhancement
 
@@ -4359,7 +4815,7 @@ yarn run v1.22.18 $ lerna-changelog 2.6.1
     ([@cmdcolin](https://github.com/cmdcolin))
 - `__mocks__`, `core`, `text-indexing`
   - [#2949](https://github.com/GMOD/jbrowse-components/pull/2949) Upgrade to MUI
-    v5, mobx-state-tree v5, mobx-react v6, mobx-react v7
+    v5, @jbrowse/mobx-state-tree v5, mobx-react v6, mobx-react v7
     ([@cmdcolin](https://github.com/cmdcolin))
 
 #### :bug: Bug Fix
@@ -7845,7 +8301,7 @@ Broken releases missing some packages
     --branch and --nightly flags for `jbrowse create` and `jbrowse upgrade`
     commands ([@cmdcolin](https://github.com/cmdcolin))
   - [#1575](https://github.com/GMOD/jbrowse-components/pull/1575) Improve
-    mobx-state-tree type validation errors
+    @jbrowse/mobx-state-tree type validation errors
     ([@cmdcolin](https://github.com/cmdcolin))
   - [#1574](https://github.com/GMOD/jbrowse-components/pull/1574) Make softclip
     indicator black if no seq available

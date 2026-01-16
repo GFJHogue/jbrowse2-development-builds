@@ -1,21 +1,21 @@
 import { LoadingEllipses, ResizeHandle } from '@jbrowse/core/ui'
+import { makeStyles } from '@jbrowse/core/util/tss-react'
 import { observer } from 'mobx-react'
-import { makeStyles } from 'tss-react/mui'
 
-import { HorizontalAxis, VerticalAxis } from './Axes'
-import DotplotTooltips from './DotplotTooltips'
-import Header from './Header'
-import ImportForm from './ImportForm'
-import MouseInteractionLayer from './MouseInteractionLayer'
-import SelectionContextMenu from './SelectionContextMenu'
-import { useCtrlKeyTracking } from './hooks/useCtrlKeyTracking'
-import { useCursorMode } from './hooks/useCursorMode'
-import { useMouseCoordinates } from './hooks/useMouseCoordinates'
-import { useMouseMoveHandler } from './hooks/useMouseMoveHandler'
-import { useMouseUpHandler } from './hooks/useMouseUpHandler'
-import { useWheelHandler } from './hooks/useWheelHandler'
+import { HorizontalAxis, VerticalAxis } from './Axes.tsx'
+import DotplotTooltips from './DotplotTooltips.tsx'
+import Header from './Header.tsx'
+import ImportForm from './ImportForm/index.tsx'
+import MouseInteractionLayer from './MouseInteractionLayer.tsx'
+import SelectionContextMenu from './SelectionContextMenu.tsx'
+import { useCtrlKeyTracking } from './hooks/useCtrlKeyTracking.ts'
+import { useCursorMode } from './hooks/useCursorMode.ts'
+import { useMouseCoordinates } from './hooks/useMouseCoordinates.ts'
+import { useMouseMoveHandler } from './hooks/useMouseMoveHandler.ts'
+import { useMouseUpHandler } from './hooks/useMouseUpHandler.ts'
+import { useWheelHandler } from './hooks/useWheelHandler.ts'
 
-import type { DotplotViewModel } from '../model'
+import type { DotplotViewModel } from '../model.ts'
 
 const useStyles = makeStyles()(theme => ({
   spacer: {
@@ -61,7 +61,11 @@ const useStyles = makeStyles()(theme => ({
   },
 }))
 
-const RenderedComponent = observer(({ model }: { model: DotplotViewModel }) => {
+const RenderedComponent = observer(function RenderedComponent({
+  model,
+}: {
+  model: DotplotViewModel
+}) {
   const { classes } = useStyles()
   return (
     <div className={classes.overlay}>
@@ -79,7 +83,7 @@ const RenderedComponent = observer(({ model }: { model: DotplotViewModel }) => {
   )
 })
 
-const DotplotViewInternal = observer(function ({
+const DotplotViewInternal = observer(function DotplotViewInternal({
   model,
 }: {
   model: DotplotViewModel
@@ -212,18 +216,20 @@ const DotplotViewInternal = observer(function ({
     </div>
   )
 })
-const DotplotView = observer(function ({ model }: { model: DotplotViewModel }) {
-  const { initialized, loading, error } = model
+const DotplotView = observer(function DotplotView({
+  model,
+}: {
+  model: DotplotViewModel
+}) {
+  const { initialized, showLoading, error, loadingMessage } = model
 
-  if ((!initialized && !loading) || error) {
+  if (showLoading) {
+    return <LoadingEllipses variant="h6" message={loadingMessage} />
+  } else if (!initialized || error) {
     return <ImportForm model={model} />
+  } else {
+    return <DotplotViewInternal model={model} />
   }
-
-  if (loading) {
-    return <LoadingEllipses variant="h6" />
-  }
-
-  return <DotplotViewInternal model={model} />
 })
 
 export default DotplotView
