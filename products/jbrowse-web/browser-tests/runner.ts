@@ -235,6 +235,53 @@ async function waitForDisplay(page: Page, trackId: string, timeout = 60000) {
   await page.waitForSelector(`[data-testid^="display-${trackId}"]`, { timeout })
 }
 
+async function waitForWorkspacesReady(page: Page) {
+  await page.waitForSelector('.dockview-theme-light, .dockview-theme-dark', {
+    timeout: 10000,
+  })
+  await page.waitForSelector('[data-testid^="view-container-"]', {
+    timeout: 10000,
+  })
+  await page.waitForSelector('input[placeholder="Search for location"]', {
+    timeout: 10000,
+  })
+  await waitForLoadingToComplete(page)
+  await delay(1000)
+}
+
+async function copyView(page: Page) {
+  const viewMenu = await findByTestId(page, 'view_menu_icon', 10000)
+  await viewMenu?.click()
+  await delay(300)
+  const viewOptions = await findByText(page, 'View options', 10000)
+  await viewOptions?.click()
+  await delay(300)
+  const copyViewBtn = await findByText(page, 'Copy view', 10000)
+  await copyViewBtn?.click()
+  await delay(1000)
+}
+
+async function clickViewMenuOption(
+  page: Page,
+  optionText: string,
+  viewIndex = 0,
+) {
+  const viewMenus = await page.$$('[data-testid="view_menu_icon"]')
+  await viewMenus[viewIndex]?.click()
+  await delay(300)
+  const viewOptions = await findByText(page, 'View options', 10000)
+  await viewOptions?.click()
+  await delay(300)
+  const option = await findByText(page, optionText, 10000)
+  await option?.click()
+}
+
+async function setupWorkspacesViaMoveToTab(page: Page) {
+  await copyView(page)
+  await clickViewMenuOption(page, 'Move to new tab', 0)
+  await waitForWorkspacesReady(page)
+}
+
 // Test suites
 interface TestSuite {
   name: string
@@ -250,74 +297,87 @@ const testSuites: TestSuite[] = [
     name: 'Workspaces',
     tests: [
       {
+        name: 'can add Linear genome view from menu with workspaces enabled',
+        fn: async page => {
+          await navigateToApp(page)
+
+          // Enable workspaces via Tools menu
+          const toolsMenu = await findByText(page, 'Tools', 10000)
+          await toolsMenu?.click()
+          await delay(300)
+          const useWorkspacesCheckbox = await findByText(
+            page,
+            'Use workspaces',
+            10000,
+          )
+          await useWorkspacesCheckbox?.click()
+          await delay(500)
+
+          // Count views before adding
+          const searchInputsBefore = await page.$$(
+            'input[placeholder="Search for location"]',
+          )
+          const viewCountBefore = searchInputsBefore.length
+
+          // Click Add menu and then Linear genome view
+          const addMenu = await findByText(page, 'Add', 10000)
+          await addMenu?.click()
+          await delay(300)
+          const linearGenomeViewOption = await findByText(
+            page,
+            'Linear genome view',
+            10000,
+          )
+          await linearGenomeViewOption?.click()
+
+          // Wait for new view to appear by polling for increased view count
+          const timeout = 10000
+          const start = Date.now()
+          let viewCountAfter = viewCountBefore
+          while (Date.now() - start < timeout) {
+            const searchInputsAfter = await page.$$(
+              'input[placeholder="Search for location"]',
+            )
+            viewCountAfter = searchInputsAfter.length
+            if (viewCountAfter > viewCountBefore) {
+              break
+            }
+            await delay(200)
+          }
+
+          if (viewCountAfter <= viewCountBefore) {
+            throw new Error(
+              `New Linear genome view was not added. Views before: ${viewCountBefore}, after: ${viewCountAfter}`,
+            )
+          }
+
+          await waitForLoadingToComplete(page)
+          await snapshot(page, 'workspaces-add-view')
+        },
+      },
+      {
         name: 'move to new tab enables workspaces',
         fn: async page => {
           await navigateToApp(page)
-          // Open view menu
-          const viewMenu = await findByTestId(page, 'view_menu_icon', 10000)
-          await viewMenu?.click()
-          await delay(300)
-          // Click View options
-          const viewOptions = await findByText(page, 'View options', 10000)
-          await viewOptions?.click()
-          await delay(300)
-          // Click Move to new tab
-          const moveToTab = await findByText(page, 'Move to new tab', 10000)
-          await moveToTab?.click()
-          // Wait for workspaces to be enabled (dockview tabs should appear)
-          await delay(1000)
-          // Verify dockview is present
-          await page.waitForSelector(
-            '.dockview-theme-light, .dockview-theme-dark',
-            { timeout: 10000 },
-          )
+          await setupWorkspacesViaMoveToTab(page)
+          await snapshot(page, 'workspaces-new-tab')
         },
       },
       {
         name: 'move to split right enables workspaces',
         fn: async page => {
           await navigateToApp(page)
-          // Open view menu
-          const viewMenu = await findByTestId(page, 'view_menu_icon', 10000)
-          await viewMenu?.click()
-          await delay(300)
-          // Click View options
-          const viewOptions = await findByText(page, 'View options', 10000)
-          await viewOptions?.click()
-          await delay(300)
-          // Click Move to split view
-          const moveToSplit = await findByText(
-            page,
-            'Move to split view',
-            10000,
-          )
-          await moveToSplit?.click()
-          // Wait for workspaces to be enabled
-          await delay(1000)
-          // Verify dockview is present
-          await page.waitForSelector(
-            '.dockview-theme-light, .dockview-theme-dark',
-            { timeout: 10000 },
-          )
+          await copyView(page)
+          await clickViewMenuOption(page, 'Move to split view', 0)
+          await waitForWorkspacesReady(page)
+          await snapshot(page, 'workspaces-split-view')
         },
       },
       {
         name: 'copy view creates second view',
         fn: async page => {
           await navigateToApp(page)
-          // Open view menu
-          const viewMenu = await findByTestId(page, 'view_menu_icon', 10000)
-          await viewMenu?.click()
-          await delay(300)
-          // Click View options
-          const viewOptions = await findByText(page, 'View options', 10000)
-          await viewOptions?.click()
-          await delay(300)
-          // Click Copy view
-          const copyView = await findByText(page, 'Copy view', 10000)
-          await copyView?.click()
-          await delay(1000)
-          // Should now have 2 view menus
+          await copyView(page)
           const viewMenus = await page.$$('[data-testid="view_menu_icon"]')
           if (viewMenus.length !== 2) {
             throw new Error(`Expected 2 views, got ${viewMenus.length}`)
@@ -325,47 +385,138 @@ const testSuites: TestSuite[] = [
         },
       },
       {
-        name: 'multiple views in workspace - move up and down',
+        name: 'layout URL param creates workspaces with horizontal split',
         fn: async page => {
-          await navigateToApp(page)
-          // First copy the view to get 2 views
-          let viewMenu = await findByTestId(page, 'view_menu_icon', 10000)
-          await viewMenu?.click()
-          await delay(300)
-          let viewOptions = await findByText(page, 'View options', 10000)
-          await viewOptions?.click()
-          await delay(300)
-          const copyView = await findByText(page, 'Copy view', 10000)
-          await copyView?.click()
-          await delay(1000)
+          // Create a session spec with 3 views and nested layout
+          const sessionSpec = {
+            views: [
+              {
+                type: 'LinearGenomeView',
+                assembly: 'volvox',
+                loc: 'ctgA:1-5000',
+              },
+              {
+                type: 'LinearGenomeView',
+                assembly: 'volvox',
+                loc: 'ctgA:5000-10000',
+              },
+              {
+                type: 'LinearGenomeView',
+                assembly: 'volvox',
+                loc: 'ctgB:1-5000',
+              },
+            ],
+            // Horizontal split: left panel has views 0 and 1 stacked, right panel has view 2
+            layout: {
+              direction: 'horizontal',
+              children: [{ views: [0, 1] }, { views: [2] }],
+            },
+          }
 
-          // Enable workspaces by moving to new tab
-          const viewMenus = await page.$$('[data-testid="view_menu_icon"]')
-          await viewMenus[0]?.click()
-          await delay(300)
-          viewOptions = await findByText(page, 'View options', 10000)
-          await viewOptions?.click()
-          await delay(300)
-          const moveToTab = await findByText(page, 'Move to new tab', 10000)
-          await moveToTab?.click()
-          await delay(1000)
+          const specParam = encodeURIComponent(JSON.stringify(sessionSpec))
+          const url = `http://localhost:${PORT}/?config=test_data/volvox/config.json&session=spec-${specParam}`
+          await page.goto(url, { waitUntil: 'networkidle0', timeout: 60000 })
 
-          // Wait for dockview
+          // Wait for dockview to render
           await page.waitForSelector(
             '.dockview-theme-light, .dockview-theme-dark',
             { timeout: 10000 },
           )
+          await delay(2000)
+
+          // With a horizontal split, we should have 2 dockview groups
+          const groups = await page.$$('.dv-groupview')
+          if (groups.length < 2) {
+            throw new Error(
+              `Expected at least 2 dockview groups for horizontal split, got ${groups.length}`,
+            )
+          }
+
+          // Should have 3 total view containers (2 in left panel, 1 in right)
+          let viewContainers: Awaited<ReturnType<typeof page.$$>> = []
+          for (let i = 0; i < 20; i++) {
+            viewContainers = await page.$$('[data-testid^="view-container-"]')
+            if (viewContainers.length >= 3) {
+              break
+            }
+            await delay(500)
+          }
+
+          if (viewContainers.length < 3) {
+            throw new Error(
+              `Expected 3 view containers total, got ${viewContainers.length}`,
+            )
+          }
+
+          await waitForLoadingToComplete(page)
+          await snapshot(page, 'workspaces-layout-url-param')
+        },
+      },
+      {
+        name: 'layout URL param with custom sizes',
+        fn: async page => {
+          const sessionSpec = {
+            views: [
+              {
+                type: 'LinearGenomeView',
+                assembly: 'volvox',
+                loc: 'ctgA:1-5000',
+              },
+              {
+                type: 'LinearGenomeView',
+                assembly: 'volvox',
+                loc: 'ctgB:1-5000',
+              },
+            ],
+            // 70/30 horizontal split
+            layout: {
+              direction: 'horizontal',
+              children: [
+                { views: [0], size: 70 },
+                { views: [1], size: 30 },
+              ],
+            },
+          }
+
+          const specParam = encodeURIComponent(JSON.stringify(sessionSpec))
+          const url = `http://localhost:${PORT}/?config=test_data/volvox/config.json&session=spec-${specParam}`
+          await page.goto(url, { waitUntil: 'networkidle0', timeout: 60000 })
+
+          // Wait for dockview to render
+          await page.waitForSelector(
+            '.dockview-theme-light, .dockview-theme-dark',
+            { timeout: 10000 },
+          )
+          await delay(2000)
+
+          // Should have 2 dockview groups
+          const groups = await page.$$('.dv-groupview')
+          if (groups.length < 2) {
+            throw new Error(`Expected 2 dockview groups, got ${groups.length}`)
+          }
+
+          // Should have 2 view containers
+          const viewContainers = await page.$$(
+            '[data-testid^="view-container-"]',
+          )
+          if (viewContainers.length !== 2) {
+            throw new Error(
+              `Expected 2 view containers, got ${viewContainers.length}`,
+            )
+          }
+
+          await waitForLoadingToComplete(page)
+          await snapshot(page, 'workspaces-layout-custom-sizes')
+        },
+      },
+      {
+        name: 'multiple views in workspace - move up and down',
+        fn: async page => {
+          await navigateToApp(page)
+          await setupWorkspacesViaMoveToTab(page)
 
           // Copy view again to have multiple views in one panel
-          viewMenu = await findByTestId(page, 'view_menu_icon', 10000)
-          await viewMenu?.click()
-          await delay(300)
-          viewOptions = await findByText(page, 'View options', 10000)
-          await viewOptions?.click()
-          await delay(300)
-          const copyView2 = await findByText(page, 'Copy view', 10000)
-          await copyView2?.click()
-          await delay(1000)
+          await copyView(page)
 
           // Get the order of view containers before moving
           const getViewOrder = () =>
@@ -384,14 +535,7 @@ const testSuites: TestSuite[] = [
           }
 
           // Now try to move first view down
-          const viewMenusAfter = await page.$$('[data-testid="view_menu_icon"]')
-          await viewMenusAfter[0]?.click()
-          await delay(300)
-          viewOptions = await findByText(page, 'View options', 10000)
-          await viewOptions?.click()
-          await delay(300)
-          const moveDown = await findByText(page, 'Move view down', 10000)
-          await moveDown?.click()
+          await clickViewMenuOption(page, 'Move view down', 0)
           await delay(500)
 
           // Verify the order actually changed
@@ -628,6 +772,12 @@ async function runTests(page: Page, browser: Browser, includeAuth: boolean) {
       process.stdout.write(`    ⏳ ${test.name}...`)
 
       try {
+        // Clear storage between tests to prevent state leaking
+        await page.goto(`http://localhost:${PORT}/test_data/volvox/config.json`)
+        await page.evaluate(() => {
+          localStorage.clear()
+          sessionStorage.clear()
+        })
         await page.goto('about:blank')
         await test.fn(page, browser)
 
@@ -700,8 +850,9 @@ async function main() {
 
     const page = await browser.newPage()
     page.on('console', msg => {
-      if (msg.type() === 'error' && !msg.text().includes('favicon')) {
-        console.error('  Browser:', msg.text())
+      const text = msg.text()
+      if (msg.type() === 'error' && !text.includes('favicon')) {
+        console.error('  Browser:', text)
       }
     })
 

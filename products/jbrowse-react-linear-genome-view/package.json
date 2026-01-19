@@ -1,6 +1,6 @@
 {
   "name": "@jbrowse/react-linear-genome-view2",
-  "version": "4.0.3",
+  "version": "4.0.4",
   "description": "JBrowse 2 linear genome view React component",
   "keywords": [
     "jbrowse",
@@ -35,7 +35,7 @@
     "prepack": "pnpm build"
   },
   "dependencies": {
-    "@babel/runtime": "^7.28.4",
+    "@babel/runtime": "^7.28.6",
     "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
