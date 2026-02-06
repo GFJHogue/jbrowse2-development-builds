@@ -1,6 +1,6 @@
 {
   "name": "@jbrowse/react-app2",
-  "version": "4.1.1",
+  "version": "4.1.3",
   "type": "module",
   "description": "JBrowse 2 app React component",
   "keywords": [
@@ -28,6 +28,7 @@
   },
   "files": [
     "esm",
+    "dist",
     "docs"
   ],
   "scripts": {
