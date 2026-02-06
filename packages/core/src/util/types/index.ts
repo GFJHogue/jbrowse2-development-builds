@@ -5,6 +5,7 @@ import { isStateTreeNode } from '@jbrowse/mobx-state-tree'
 
 import type {
   BlobLocation as MUBlobLocation,
+  FileHandleLocation as MUFileHandleLocation,
   LocalPathLocation as MULocalPathLocation,
   NoAssemblyRegion as MUNoAssemblyRegion,
   Region as MUIRegion,
@@ -107,7 +108,12 @@ export interface AbstractSessionModel extends AbstractViewContainer {
     level?: NotificationLevel,
     action?: SnackAction,
   ) => void
-  notifyError: (message: string, error?: unknown, extra?: unknown) => void
+  notifyError: (
+    message: string,
+    error?: unknown,
+    extra?: unknown,
+    action?: SnackAction,
+  ) => void
   assemblyManager: AssemblyManager
   version: string
   getTrackActionMenuItems?: (
@@ -482,6 +488,22 @@ export function isBlobLocation(location: unknown): location is BlobLocation {
     !!location.blobId
   )
 }
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface FileHandleLocation extends SnapshotIn<
+  typeof MUFileHandleLocation
+> {}
+
+export function isFileHandleLocation(
+  location: unknown,
+): location is FileHandleLocation {
+  return (
+    typeof location === 'object' &&
+    location !== null &&
+    'handleId' in location &&
+    !!location.handleId
+  )
+}
 export class AuthNeededError extends Error {
   constructor(
     public message: string,
@@ -528,7 +550,11 @@ export function isRetryException(exception: Error): boolean {
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface BlobLocation extends SnapshotIn<typeof MUBlobLocation> {}
 
-export type FileLocation = LocalPathLocation | UriLocation | BlobLocation
+export type FileLocation =
+  | LocalPathLocation
+  | UriLocation
+  | BlobLocation
+  | FileHandleLocation
 
 // These types are slightly different than the MST models representing a
 // location because a blob cannot be stored in a MST, so this is the
@@ -542,9 +568,13 @@ export interface PreLocalPathLocation {
 export interface PreBlobLocation {
   blob: File
 }
+export interface PreFileHandleLocation {
+  handle: FileSystemFileHandle
+}
 export type PreFileLocation =
   | PreUriLocation
   | PreLocalPathLocation
   | PreBlobLocation
+  | PreFileHandleLocation
 
 export { default as TextSearchManager } from '../../TextSearch/TextSearchManager.ts'

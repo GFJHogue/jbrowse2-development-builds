@@ -147,11 +147,15 @@ function startServer(port: number): Promise<http.Server> {
 async function navigateToApp(
   page: Page,
   config = 'test_data/volvox/config.json',
+  sessionName = 'Test Session',
 ) {
-  await page.goto(`http://localhost:${PORT}/?config=${config}`, {
-    waitUntil: 'networkidle0',
-    timeout: 60000,
-  })
+  await page.goto(
+    `http://localhost:${PORT}/?config=${config}&sessionName=${encodeURIComponent(sessionName)}`,
+    {
+      waitUntil: 'networkidle0',
+      timeout: 60000,
+    },
+  )
   await findByText(page, 'ctgA')
 }
 
@@ -165,13 +169,6 @@ async function openTrack(page: Page, trackId: string) {
 }
 
 async function snapshot(page: Page, name: string) {
-  // Set a static session name to avoid snapshot diffs from random names
-  await page.evaluate(() => {
-    const el = document.querySelector('[data-testid="session_name"]')
-    if (el) {
-      el.textContent = 'Test Session'
-    }
-  })
   const result = await capturePageSnapshot(page, name)
   if (!result.passed) {
     throw new Error(result.message)
@@ -222,13 +219,17 @@ async function handleBasicAuthLogin(page: Page) {
   await delay(500)
 }
 
-async function clearStorageAndNavigate(page: Page, config: string) {
+async function clearStorageAndNavigate(
+  page: Page,
+  config: string,
+  sessionName = 'Test Session',
+) {
   await page.goto(`http://localhost:${PORT}/`)
   await page.evaluate(() => {
     localStorage.clear()
     sessionStorage.clear()
   })
-  await navigateToApp(page, config)
+  await navigateToApp(page, config, sessionName)
 }
 
 async function waitForDisplay(page: Page, trackId: string, timeout = 60000) {
@@ -293,6 +294,67 @@ interface TestSuite {
 }
 
 const testSuites: TestSuite[] = [
+  {
+    name: 'Session Spec URL Parameters',
+    tests: [
+      {
+        name: 'displaySnapshot type opens track with specific display type',
+        fn: async page => {
+          const sessionSpec = {
+            views: [
+              {
+                type: 'LinearGenomeView',
+                assembly: 'volvox',
+                loc: 'ctgA:1-10000',
+                tracks: [
+                  {
+                    trackId: 'volvox_sv_cram',
+                    displaySnapshot: {
+                      type: 'LinearReadCloudDisplay',
+                    },
+                  },
+                ],
+              },
+            ],
+          }
+
+          const specParam = encodeURIComponent(JSON.stringify(sessionSpec))
+          const url = `http://localhost:${PORT}/?config=test_data/volvox/config.json&session=spec-${specParam}&sessionName=Test%20Session`
+          await page.goto(url, { waitUntil: 'networkidle0', timeout: 60000 })
+
+          await findByText(page, 'ctgA')
+          // The UMD plugin adds LinearReadCloudDisplay with drawCloud:true for _sv tracks
+          await findByTestId(page, 'cloud-canvas', 60000)
+          await waitForLoadingToComplete(page)
+          await delay(1000)
+          await snapshot(page, 'session-spec-display-snapshot-type')
+        },
+      },
+      {
+        name: 'jexl',
+        fn: async page => {
+          const sessionSpec = {
+            views: [
+              {
+                type: 'LinearGenomeView',
+                assembly: 'volvox',
+                loc: 'ctgA:2,707..8,600',
+                tracks: ['volvox_test_vcf_jexl'],
+              },
+            ],
+          }
+
+          const specParam = encodeURIComponent(JSON.stringify(sessionSpec))
+          const url = `http://localhost:${PORT}/?config=test_data/volvox/config.json&session=spec-${specParam}&sessionName=Test%20Session`
+          await page.goto(url, { waitUntil: 'networkidle0', timeout: 60000 })
+          await findByTestId(page, 'canvas-feature-overlay', 60000)
+          await waitForLoadingToComplete(page)
+          await delay(1000)
+          await snapshot(page, 'session-spec-jexl')
+        },
+      },
+    ],
+  },
   {
     name: 'Workspaces',
     tests: [
@@ -414,7 +476,7 @@ const testSuites: TestSuite[] = [
           }
 
           const specParam = encodeURIComponent(JSON.stringify(sessionSpec))
-          const url = `http://localhost:${PORT}/?config=test_data/volvox/config.json&session=spec-${specParam}`
+          const url = `http://localhost:${PORT}/?config=test_data/volvox/config.json&session=spec-${specParam}&sessionName=Test%20Session`
           await page.goto(url, { waitUntil: 'networkidle0', timeout: 60000 })
 
           // Wait for dockview to render
@@ -479,7 +541,7 @@ const testSuites: TestSuite[] = [
           }
 
           const specParam = encodeURIComponent(JSON.stringify(sessionSpec))
-          const url = `http://localhost:${PORT}/?config=test_data/volvox/config.json&session=spec-${specParam}`
+          const url = `http://localhost:${PORT}/?config=test_data/volvox/config.json&session=spec-${specParam}&sessionName=Test%20Session`
           await page.goto(url, { waitUntil: 'networkidle0', timeout: 60000 })
 
           // Wait for dockview to render
@@ -639,6 +701,30 @@ const testSuites: TestSuite[] = [
           await findByTestId(page, 'Blockset-pileup', 60000)
           await waitForLoadingToComplete(page)
           await snapshot(page, 'alignments-bam')
+        },
+      },
+      {
+        name: 'volvox_sv track screenshot',
+        fn: async page => {
+          const sessionSpec = {
+            views: [
+              {
+                type: 'LinearGenomeView',
+                assembly: 'volvox',
+                loc: 'ctgA:2,707..48,600',
+                tracks: ['volvox_sv'],
+              },
+            ],
+          }
+
+          const specParam = encodeURIComponent(JSON.stringify(sessionSpec))
+          const url = `http://localhost:${PORT}/?config=test_data/volvox/config.json&session=spec-${specParam}&sessionName=Test%20Session`
+          await page.goto(url, { waitUntil: 'networkidle0', timeout: 60000 })
+
+          // The UMD plugin adds LinearReadCloudDisplay with drawCloud:true for _sv tracks
+          await findByTestId(page, 'cloud-canvas', 60000)
+          await waitForLoadingToComplete(page)
+          await snapshot(page, 'alignments-volvox-sv')
         },
       },
     ],

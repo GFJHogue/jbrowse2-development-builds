@@ -1,6 +1,7 @@
 {
   "name": "@jbrowse/react-app2",
-  "version": "4.0.4",
+  "version": "4.1.1",
+  "type": "module",
   "description": "JBrowse 2 app React component",
   "keywords": [
     "jbrowse",
@@ -17,7 +18,13 @@
   "author": "JBrowse Team",
   "main": "src/index.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./esm/makeWorkerInstance": "./src/makeWorkerInstance.ts",
+    "./esm/makeWorkerInstance.js": "./src/makeWorkerInstance.ts",
+    "./esm/rpcWorker": "./src/rpcWorker.ts",
+    "./esm/rpcWorker.js": "./src/rpcWorker.ts",
+    "./esm/workerPolyfill": "./src/workerPolyfill.js",
+    "./esm/workerPolyfill.js": "./src/workerPolyfill.js"
   },
   "files": [
     "esm",
@@ -27,7 +34,7 @@
     "build": "pnpm run /^build:/",
     "prepublishOnly": "node output-version.js > src/version.ts && git add -A src && git commit -m '[skip ci] Bump version.ts'",
     "build:esm": "tsc --build tsconfig.build.esm.json",
-    "build:webpack": "webpack",
+    "build:webpack": "webpack -c webpack.config.mjs",
     "clean": "rimraf esm *.tsbuildinfo",
     "storybook": "storybook dev --port 6006",
     "storybook:build": "storybook build",
@@ -41,7 +48,6 @@
     "@jbrowse/app-core": "workspace:^",
     "@jbrowse/core": "workspace:^",
     "@jbrowse/mobx-state-tree": "^5.5.0",
-    "dockview-core": "^4.13.1",
     "@jbrowse/plugin-alignments": "workspace:^",
     "@jbrowse/plugin-arc": "workspace:^",
     "@jbrowse/plugin-authentication": "workspace:^",
@@ -72,10 +78,11 @@
     "@jbrowse/plugin-wiggle": "workspace:^",
     "@jbrowse/product-core": "workspace:^",
     "@jbrowse/web-core": "workspace:^",
-    "@mui/icons-material": "^7.3.6",
-    "@mui/material": "^7.3.6",
-    "base64-js": "^1.5.1",
+    "@mui/icons-material": "^7.3.7",
+    "@mui/material": "^7.3.7",
     "@types/file-saver-es": "^2.0.3",
+    "base64-js": "^1.5.1",
+    "dockview-core": "^4.13.1",
     "file-saver-es": "^2.0.5",
     "mobx": "^6.15.0",
     "mobx-react": "^9.2.1",
@@ -92,6 +99,28 @@
       ".": {
         "types": "./esm/index.d.ts",
         "import": "./esm/index.js"
+      },
+      "./esm/makeWorkerInstance": {
+        "types": "./esm/makeWorkerInstance.d.ts",
+        "import": "./esm/makeWorkerInstance.js"
+      },
+      "./esm/makeWorkerInstance.js": {
+        "types": "./esm/makeWorkerInstance.d.ts",
+        "import": "./esm/makeWorkerInstance.js"
+      },
+      "./esm/rpcWorker": {
+        "types": "./esm/rpcWorker.d.ts",
+        "import": "./esm/rpcWorker.js"
+      },
+      "./esm/rpcWorker.js": {
+        "types": "./esm/rpcWorker.d.ts",
+        "import": "./esm/rpcWorker.js"
+      },
+      "./esm/workerPolyfill": {
+        "import": "./esm/workerPolyfill.js"
+      },
+      "./esm/workerPolyfill.js": {
+        "import": "./esm/workerPolyfill.js"
       }
     }
   },

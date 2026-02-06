@@ -38,10 +38,22 @@ export interface NavLocation {
   assemblyName?: string
 }
 
+export interface VolatileGuide {
+  xPos: number
+}
+
+export type TrackInit =
+  | string
+  | {
+      trackId: string
+      displaySnapshot?: Record<string, unknown>
+      trackSnapshot?: Record<string, unknown>
+    }
+
 export interface InitState {
   loc?: string
   assembly: string
-  tracks?: string[]
+  tracks?: TrackInit[]
   tracklist?: boolean
   nav?: boolean
   highlight?: string[]

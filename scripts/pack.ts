@@ -3,7 +3,7 @@ import path from 'path'
 
 import spawn from 'cross-spawn'
 
-const subDirs = ['cgv-vite', 'lgv-vite', 'app-vite']
+const subDirs = ['cgv-vite', 'lgv-vite', 'app-vite', 'cli-node18']
 const root = path.resolve(import.meta.dirname, '..')
 const workspaceDirs = ['packages', 'products', 'plugins']
 
@@ -21,7 +21,7 @@ for (const dir of workspaceDirs) {
       const pkgJsonPath = path.join(pkgDir, 'package.json')
       if (fs.existsSync(pkgJsonPath)) {
         const location = pkgDir
-        const { signal, status } = spawn.sync('pnpm', ['pack'], {
+        const { signal, status } = spawn.sync('pnpm', ['pack', '--silent'], {
           stdio: 'inherit',
           cwd: location,
         })

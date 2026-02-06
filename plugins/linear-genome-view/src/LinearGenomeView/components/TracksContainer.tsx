@@ -14,7 +14,7 @@ import { useRangeSelect } from './useRangeSelect.ts'
 import { useSideScroll } from './useSideScroll.ts'
 import { useWheelScroll } from './useWheelScroll.ts'
 
-import type { LinearGenomeViewModel } from '..'
+import type { LinearGenomeViewModel } from '../index.ts'
 
 const CenterLine = lazy(() => import('./CenterLine.tsx'))
 const Highlight = lazy(() => import('./Highlight.tsx'))
@@ -107,6 +107,9 @@ const TracksContainer = observer(function TracksContainer({
           />
         </Suspense>
       ) : null}
+      {model.volatileGuides.map((guide, idx) => (
+        <VerticalGuide key={idx} model={model} coordX={guide.xPos} />
+      ))}
       {anchorPosition ? (
         <Menu
           anchorReference="anchorPosition"

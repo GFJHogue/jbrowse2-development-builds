@@ -1,5 +1,9 @@
 import PluginManager from '@jbrowse/core/PluginManager'
 import { doAnalytics } from '@jbrowse/core/util/analytics'
+import {
+  restoreFileHandlesFromSnapshot,
+  setPendingFileHandleIds,
+} from '@jbrowse/core/util/tracks'
 
 import corePlugins from './corePlugins.ts'
 import { loadHubSpec } from './loadHubSpec.ts'
@@ -72,20 +76,54 @@ export function createPluginManager(
     // in order: saves the previous autosave for recovery, tries to load the
     // local session if session in query, or loads the default session
     try {
-      const { sessionError, sessionSpec, sessionSnapshot, hubSpec } = model
+      const {
+        sessionError,
+        sessionSpec,
+        sessionSnapshot,
+        hubSpec,
+        sessionName,
+      } = model
       if (sessionError) {
         // eslint-disable-next-line @typescript-eslint/only-throw-error
         throw sessionError
       } else if (sessionSnapshot) {
+        // Attempt to restore file handles from the session snapshot
+        // This is async but we kick it off before setting the session
+        // If permission is already granted (persisted), files will be available
+        // If not, user will need to click to grant permission
+        restoreFileHandlesFromSnapshot(sessionSnapshot, false)
+          .then(results => {
+            const failed = results.filter(r => !r.success)
+            if (failed.length > 0) {
+              const failedIds = failed.map(f => f.handleId)
+              console.warn(
+                '[createPluginManager] Some file handles could not be restored (need user gesture):',
+                failedIds,
+              )
+              // Track failed handles so UI can prompt user
+              setPendingFileHandleIds(failedIds)
+            }
+          })
+          .catch((err: unknown) => {
+            console.error(
+              '[createPluginManager] Error restoring file handles:',
+              err,
+            )
+          })
         rootModel.setSession(sessionSnapshot)
       } else if (hubSpec) {
-        // @ts-expect-error
-        afterInitializedCb = () => loadHubSpec(hubSpec, pluginManager)
+        afterInitializedCb = () =>
+          // @ts-expect-error
+          loadHubSpec({ ...hubSpec, sessionName }, pluginManager)
       } else if (sessionSpec) {
-        // @ts-expect-error
-        afterInitializedCb = () => loadSessionSpec(sessionSpec, pluginManager)
+        afterInitializedCb = () =>
+          // @ts-expect-error
+          loadSessionSpec({ ...sessionSpec, sessionName }, pluginManager)
       } else {
         rootModel.setDefaultSession()
+        if (sessionName) {
+          rootModel.renameCurrentSession(sessionName)
+        }
       }
     } catch (e) {
       rootModel.setDefaultSession()

@@ -4,14 +4,16 @@ import { Readable } from 'stream'
 
 import { isSupportedIndexingAdapter } from '@jbrowse/core/util'
 import { checkStopToken } from '@jbrowse/core/util/stopToken'
+import {
+  generateMeta,
+  indexGff3,
+  indexVcf,
+  sanitizeForFilename,
+} from '@jbrowse/text-indexing-core'
 import { ixIxxStream } from 'ixixx'
 
-// misc
-import { generateMeta } from './types/common.ts'
-import { indexGff3 } from './types/gff3Adapter.ts'
-import { indexVcf } from './types/vcfAdapter.ts'
-
-import type { Track, indexType } from './util.ts'
+import type { indexType } from './util.ts'
+import type { Track } from '@jbrowse/text-indexing-core'
 
 export async function indexTracks(args: {
   tracks: Track[]
@@ -290,7 +292,8 @@ function getLoc(attr: string, config: Track) {
 }
 
 function runIxIxx(readStream: Readable, idxLocation: string, name: string) {
-  const ixFilename = path.join(idxLocation, 'trix', `${name}.ix`)
-  const ixxFilename = path.join(idxLocation, 'trix', `${name}.ixx`)
+  const safeName = sanitizeForFilename(name)
+  const ixFilename = path.join(idxLocation, 'trix', `${safeName}.ix`)
+  const ixxFilename = path.join(idxLocation, 'trix', `${safeName}.ixx`)
   return ixIxxStream(readStream, ixFilename, ixxFilename)
 }

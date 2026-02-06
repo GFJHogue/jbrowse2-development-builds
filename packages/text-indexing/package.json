@@ -1,6 +1,7 @@
 {
   "name": "@jbrowse/text-indexing",
-  "version": "4.0.4",
+  "version": "4.1.1",
+  "type": "module",
   "description": "JBrowse 2 text indexing for desktop",
   "keywords": [
     "jbrowse",
@@ -32,8 +33,8 @@
   },
   "dependencies": {
     "@jbrowse/core": "workspace:^",
-    "ixixx": "^3.0.2",
-    "node-fetch": "^2.7.0",
+    "@jbrowse/text-indexing-core": "workspace:^",
+    "ixixx": "^3.0.3",
     "sanitize-filename": "^1.6.3"
   },
   "peerDependencies": {
