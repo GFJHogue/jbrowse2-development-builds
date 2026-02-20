@@ -2,7 +2,8 @@ import path from 'path'
 import url, { pathToFileURL } from 'url'
 
 import electron, { BrowserWindow, Menu, app, shell } from 'electron'
-import windowStateKeeper from 'electron-window-state'
+
+import windowStateKeeper from './windowStateKeeper.ts'
 
 import type { AppUpdater } from 'electron-updater'
 
@@ -15,7 +16,8 @@ const DEFAULT_DEV_SERVER_URL = 'http://localhost:3000'
 
 function getAppUrl(devServerUrl: URL): URL {
   if (app.isPackaged) {
-    return pathToFileURL(path.join(app.getAppPath(), 'build', 'index.html'))
+    // When packaged with @electron/packager, the build directory IS the app root
+    return pathToFileURL(path.join(app.getAppPath(), 'index.html'))
   }
   return devServerUrl
 }

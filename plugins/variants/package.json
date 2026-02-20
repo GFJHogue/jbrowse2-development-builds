@@ -1,6 +1,6 @@
 {
   "name": "@jbrowse/plugin-variants",
-  "version": "4.1.3",
+  "version": "4.1.11",
   "type": "module",
   "description": "JBrowse 2 variant adapters, tracks, etc.",
   "keywords": [
@@ -39,10 +39,10 @@
     "@jbrowse/plugin-circular-view": "workspace:^",
     "@jbrowse/plugin-linear-genome-view": "workspace:^",
     "@jbrowse/sv-core": "workspace:^",
-    "@mui/icons-material": "^7.3.7",
-    "@mui/material": "^7.3.7",
+    "@mui/icons-material": "^7.3.8",
+    "@mui/material": "^7.3.8",
     "@mui/x-charts-vendor": "^8.26.0",
-    "@mui/x-data-grid": "^8.26.0",
+    "@mui/x-data-grid": "^8.27.1",
     "@types/file-saver-es": "^2.0.3",
     "copy-to-clipboard": "^3.3.3",
     "escape-html": "^1.0.3",
