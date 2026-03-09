@@ -1,6 +1,6 @@
 {
   "name": "@jbrowse/app-core",
-  "version": "4.1.13",
+  "version": "4.1.14",
   "type": "module",
   "description": "JBrowse 2 code shared between the 'full featured' apps e.g. jbrowse-web and jbrowse-desktop",
   "keywords": [
@@ -37,8 +37,8 @@
     "@jbrowse/product-core": "workspace:^",
     "@mui/icons-material": "^7.3.8",
     "@mui/material": "^7.3.8",
-    "dockview-core": "^4.13.1",
-    "dockview-react": "^4.13.1",
+    "dockview-core": "^5.1.0",
+    "dockview-react": "^5.1.0",
     "mobx": "^6.15.0",
     "mobx-react": "^9.2.1"
   },
