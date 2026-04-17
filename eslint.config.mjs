@@ -28,7 +28,6 @@ export default defineConfig(
       'products/**/webpack.config.js',
       'products/**/webpack.config.mjs',
       '**/.storybook',
-      '**/output-version.js',
       '**/umd_plugin.js',
 
       'products/jbrowse-desktop/test/e2e.ts',
@@ -92,7 +91,7 @@ export default defineConfig(
       react: {
         version: 'detect',
       },
-      'import/ignore': ['dockview-react', '@tanstack/react-table'],
+      'import/ignore': ['dockview-react'],
     },
   },
   {

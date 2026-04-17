@@ -1,6 +1,6 @@
 {
   "name": "@jbrowse/plugin-alignments",
-  "version": "4.1.15",
+  "version": "4.2.0",
   "type": "module",
   "description": "JBrowse 2 alignments adapters, tracks, etc.",
   "keywords": [
@@ -37,8 +37,8 @@
     "@jbrowse/plugin-linear-genome-view": "workspace:^",
     "@jbrowse/plugin-wiggle": "workspace:^",
     "@jbrowse/sv-core": "workspace:^",
-    "@mui/icons-material": "^7.3.9",
-    "@mui/material": "^7.3.9",
+    "@mui/icons-material": "^7.3.10",
+    "@mui/material": "^7.3.10",
     "@mui/x-charts-vendor": "^8.26.0",
     "canvas2svg": "^1.0.16",
     "copy-to-clipboard": "^3.3.3",
