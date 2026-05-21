@@ -12,7 +12,7 @@ import type { Instance } from '@jbrowse/mobx-state-tree'
 import type { CircularViewStateModel } from '@jbrowse/plugin-circular-view'
 import type { SpreadsheetViewStateModel } from '@jbrowse/plugin-spreadsheet-view'
 
-interface SvInspectorViewInit {
+export interface SvInspectorViewInit {
   assembly: string
   uri: string
   fileType?: string
@@ -270,6 +270,10 @@ function SvInspectorViewF(pluginManager: PluginManager) {
             async function svInspectorViewInitAutorun() {
               const { init, width } = self
               if (!width || !init) {
+                return
+              }
+              if (!init.uri) {
+                self.setInit(undefined)
                 return
               }
 

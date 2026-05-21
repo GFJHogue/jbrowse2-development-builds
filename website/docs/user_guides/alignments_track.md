@@ -1,52 +1,42 @@
 ---
 id: alignments_track
 title: Alignments track
+description: BAM/CRAM pileup and coverage displays
+guide_category: Track types
 ---
 
-import Figure from '../figure'
-
-Visualizing alignments is an important aspect of genome browsers. This guide
-will go over the main features of the "Alignments track." The alignments track
-is a combination of a pileup and a coverage visualization.
+The alignments track combines a pileup and a coverage visualization.
 
 ### Pileup visualization
 
-The pileup is the lower part of the alignments track and shows each of the reads
-as boxes positioned on the genome.
+The pileup (lower panel) shows reads as boxes positioned on the genome.
 
-By default the reads are colored red if they aligned to the forward strand of
-the reference genome, or blue if they aligned to the reverse strand.
+By default, forward-strand reads are red; reverse-strand reads are blue.
 
 ### Coverage visualization
 
-The coverage visualization shows the depth-of-coverage of the reads at each
-position on the genome, and also draws using colored boxes any occurrence of
-mismatches between the read and the reference genome, so if 50% of the reads had
-a T instead of the reference A, half the height of the coverage histogram would
-contain a 'red' box.
+The coverage track shows depth-of-coverage at each position and highlights
+mismatches with colored boxes proportional to their frequency — if 50% of reads
+have a T where the reference has A, half the histogram height is colored.
 
-<Figure caption="Screenshot showing the alignments track, which contains both a coverage view at the top and a pileup view at the bottom" src="/img/alignments.png" />
+<Figure caption="The alignments track with coverage (top panel, depth histogram with mismatches colored proportionally) and pileup (bottom panel, individual reads as colored boxes — red for forward strand, blue for reverse strand)." src="/img/alignments.png" />
 
 ### Show soft clipping
 
-If a read contains bases that do not map the the genome properly, they can
-either be removed from the alignment (hard clipping) or can be included, and not
-shown by default (soft clipping).
-
-JBrowse 2 also contains an option to "show the soft clipping" that has occurred.
-This can be valuable to show the signal around a region that contains structural
-variation or difficult mappability.
+Aligners clip terminal bases that cannot be incorporated into an alignment: hard
+clipping discards them from the BAM record; soft clipping retains them in the
+BAM sequence (marked 'S' in the CIGAR) but excludes them from the alignment.
+JBrowse does not render soft-clipped bases by default, but enabling "Show soft
+clipping" (Pileup settings menu) can reveal signal around structural variants
+and difficult mappability regions.
 
 <Figure caption="The soft clipping option is a toggle in the 'Pileup settings' menu." src="/img/alignments_soft_clipped_menu.png" />
-<Figure caption="Shows what turning on soft-clipping enables for a simulated long-read dataset. There is a simulated structural variant, a deletion, at this position, so the read has bases that map to the other side of the deletion being revealed by this." src="/img/alignments_soft_clipped.png" />
+<Figure caption="Soft-clipped reads at a breakpoint edge (~position 2,700, right side). With Show soft clipping enabled, the overhanging bases appear as colored nucleotides on each read; the dense cluster of colored bases at a common endpoint reveals where reads cannot align through a structural variant boundary." src="/img/alignments_soft_clipped.png" />
 
 ### Sort by options
 
-The alignments tracks can also be configured to "sort by" a specific attribute
-for reads that span **the center line**.
-
-By default the center line is not shown, but by showing it (detailed below) then
-you will obtain a better idea of what the "sort by" option is doing.
+The alignments track can be configured to sort reads by a specific attribute at
+**the center line**.
 
 ### Showing the center line
 
@@ -58,40 +48,33 @@ you will obtain a better idea of what the "sort by" option is doing.
 
 :::info Note
 
-The center line is used by the 'Sort by' function discussed in this section; the
-sort is performed using properties of the feature, or even exact base pair
+The sort is performed using properties of the read, or the exact base pair
 underlying the center line.
 
 :::
 
 ### Sorting by base pair
 
-Sorting by base pair will re-arrange the pileup so that the reads that have a
-specific base pair mutation at the position crossing the center line (which is
-1bp wide) will be arranged in a sorted manner. To enable Sort by base pair:
+Sorts the pileup by the base each read has at the center line position. To
+enable:
 
-1. Open the track menu for the specific track using the vertical '...' in the
-   track label
-2. Select `Pileup settings`->`Sort by`->`Base pair`
+1. Open the track menu using the vertical '...' in the track label
+2. Select `Pileup settings` → `Sort by` → `Base pair`
 
 <Figure caption="Illustrating the pileup re-ordering that happens when turning on the 'Sort by'->'Base pair'. The sorting is done by specifically what letter of each read underlies the current center line position (the center line is 1bp wide, so sorted by that exact letter)" src="/img/alignments_sort_by_base.png" />
 
 ### Sort, color and filter by tag
 
-With these features, we can create expressive views of alignments tracks. For
-example, in the below step-by-step guide, it shows how to color and sort the
-reads by the HP tag:
+The guide below shows how to color and sort reads by the HP tag:
 
-<Figure caption="Step-by-step guide showing how to sort and color by haplotype with the HP tag." src="/img/alignments/haplotype.png" />
+<Figure caption="Four-step walkthrough for coloring and sorting reads by haplotype. (1) Open Track menu → Pileup settings → Color by → Tag. (2) Enter HP as the tag name. (3) Reads are now colored by HP value, one color per haplotype. (4) Open Sort by → Tag → HP to stack each haplotype's reads into contiguous rows." src="/img/alignments/haplotype.png" />
 
 ### Color by modifications/methylation
 
-If you have data that marks DNA/RNA modifications using the MM tag in BAM/CRAM
-format, then the alignments track can use these tags to color modifications. It
-uses two modes:
+The alignments track can color DNA/RNA modifications using the MM tag in
+BAM/CRAM files. It uses two modes:
 
 1. All modifications - draws the modifications as they are
-1. modifications - draws the modifications as they are
 1. Methylation mode - draws both unmodified and modified CpGs (unmodified
    positions are not indicated by the MM tag and this mode considers the
    sequence context)
@@ -104,91 +87,76 @@ uses two modes:
 
 JBrowse uses the same color scheme as IGV for coloring by pair orientation.
 These pair orientations can be used to reveal complex patterns of structural
-variation.
+variation. For a full breakdown of what each color indicates and how to
+interpret each SV type, see the
+[structural variant visualization guide](/docs/user_guides/sv_visualization).
 
-See
-[IGV's Interpreting Color by Pair Orientation guide](https://igv.org/doc/desktop/#UserGuide/tracks/alignments/paired_end_alignments/#pair-orientation)
-for further details on interpreting these pair orientations.
-
-<Figure caption="This shows an inverted duplication, the tandem duplication can produce green arrows which have reads pointing in opposite directions e.g. <-- and -->, while blue arrows which can indicate an inversion point in the same direction e.g. --> and -->." src="/img/inverted_duplication.png" />
+<Figure caption="This shows an inverted duplication. The tandem duplication produces green arrows (RL orientation, reads pointing away from each other, e.g. <-- and -->), while the inversion boundaries produce teal (LL) and dark blue (RR) arrows pointing in the same direction." src="/img/inverted_duplication.png" />
 
 ### Sashimi-style arcs
 
-The alignments track will draw sashimi-track style arcs across spliced
-alignments (indicated by N in the CIGAR string). If the reads additionally are
-tagged with XS tags, it will try to draw the arcs using the strand indicated by
-the alignment.
+Spliced alignments (N in the CIGAR string) are drawn with sashimi-style arcs. If
+reads carry an XS tag, arcs reflect the strand of the alignment.
 
 <Figure caption="Sashimi-style arcs that are automatically drawn from spliced alignments. These arcs will be drawn by default on both short-reads e.g. RNA-seq and long reads e.g. Iso-Seq." src="/img/alignments_track_arcs.png" />
 
 :::info Note
 
-You can disable these by clicking on the track menu (vertical "..." next to
-track label, then hovering over SNPCoverage options, and unchecking "Draw
-arcs").
+Disable via the track menu (vertical "..." next to track label) → SNPCoverage
+settings → uncheck "Draw arcs".
 
 :::
 
 ### Insertion and clipping indicators
 
-The alignments track will also draw an upside-down histogram of insertion and
-soft/hard clipped read counts at all positions, and mark significant positions
-(covering 30% of the reads) with a colored triangle.
+An inverted histogram of insertion and clipping counts is drawn above the
+pileup; positions where >30% of reads carry an event are marked with a colored
+triangle.
 
 <Figure caption="Clipping and insertion indicators are drawn at the top of the alignments track. Purple indicates insertions, the blue indicates soft clipping, and red indicates hard clipping." src="/img/alignment_clipping_indicators.png" />
 
-Also, insertions that are larger than 10bp are marked with a larger purple
-rectangle, seen in the screenshot below. Generally, long reads span larger
-insertions better, so this feature is more prominent with large reads.
+Insertions >10bp are marked with a larger purple rectangle. This signal is more
+prominent in long-read data, which can span larger insertions.
 
 <Figure caption="Large insertion indicator drawn from long reads, along with the 'show soft clipping' setting turned on for a short read track." src="/img/insertion_indicators.png" />
 
 :::info Note
 
-You can disable these by clicking on the track menu (vertical "..." next to
-track label, then hovering over SNPCoverage options, and unchecking "Draw
-insertion/clipping indicators" and "Draw insertion/clipping counts").
+Disable via the track menu (vertical "..." next to track label) → SNPCoverage
+settings → uncheck "Draw insertion/clipping indicators" and "Draw
+insertion/clipping counts".
 
 :::
 
-### Using the "Arc display"
+### Using the "Read arc display"
 
-In JBrowse 2.3.0, we introduced the ability to render "Arcs" to show long range
-connections between reads. This information is very valuable for revealing
-structural variation, misassemblies, etc.
+The read arc display renders bezier curves between paired-end or split-read
+ends, making long-range connections visible for detecting SVs and misassemblies.
 
-To enable, use the track menu to launch "Display types"->"Arc display" or
-"Replace lower panel with..."->"Arc display"
+Enable via Track menu → Display types → Read arc display (or "Replace lower
+panel with..." to show arcs alongside coverage).
 
-<Figure caption="Menu item for selecting the 'Arc display' using the track menu. In this case we are just replacing the 'lower panel' allowing the arcs to be displayed alongside the coverage" src="/img/alignments/select_arc_display.png" />
+<Figure caption="Track menu → Display types (or Replace lower panel with...) shows three lower-panel options: Pileup display (default), Read arc display, and Linked reads display. Selecting Read arc display replaces the pileup with bezier arc curves while keeping the coverage panel." src="/img/alignments/select_arc_display.png" />
 
-The "Arc display" bezier curves will automatically try to fit into the window
-when you click and drag the track height, so you can create a dense display of
-arcs using multiple data tracks
+Dragging the track height repacks the arcs to fit, allowing dense displays with
+multiple tracks. Inter-chromosomal connections appear as vertical lines;
+off-screen interactions as larger arcs. Both can be disabled via the track menu.
 
-Long range interactions are indicated using vertical lines (connecting to other
-chromosomes for example) or larger semi-circular arcs for off-screen
-interactions). You can turn off rendering these events using the track menu if
-they are not relevant to your interest.
+[Live demo — HG002 deletion with Nanopore and Illumina reads in arc display](https://jbrowse.org/code/jb2/latest/?config=test_data%2Fconfig_demo.json&session=share-fDL8SrEPoO&password=6rsxL)
 
-https://jbrowse.org/code/jb2/latest/?config=test_data%2Fconfig_demo.json&session=share-fDL8SrEPoO&password=6rsxL
-
-<Figure caption="The arc display showing a deletion with Illumina paired-end reads and Nanopore ultra-long reads on HG002. Also shows the menu-items for hiding inter-region lines." src="/img/alignments/arc_selector.png" />
+<Figure caption="Read arc display for a deletion in HG002. Illumina short arcs (top) and Nanopore long sweeping arcs (bottom) both span the deleted region — the arcs are longer than neighboring pairs, indicating the deletion. Color scheme is Insert size ± 3σ: red arcs have inserts larger than expected." src="/img/alignments/arc_selector.png" />
 
 ### Using the "Linked reads display"
 
-Similar to the "Arc display" we also offer what we call the "Read cloud"
-display. It is similar in some ways to the "Arc display" but renders paired-end
-or split read features as connected and stratified by the distance between their
-connections logarithmically on the "y-position" of the track. Similar to the
-"Arc display", clicking and dragging the track height of the "Read cloud
-display" will re-pack features into that area.
+The linked reads display connects paired-end reads and split alignments as rows
+stratified by log-scaled distance between ends. Dragging the track height
+repacks reads into the available space.
 
-<Figure caption="The 'Arc display' and 'Read cloud' being shown for the same dataset, showing some synthetic SVs on our sample volvox data. The read cloud display uniquely shows insertion (pink pairs) better than the arc display." src="/img/alignments/read_cloud.png" />
+<Figure caption="The 'Arc display' and 'Linked reads display' being shown for the same dataset, showing some synthetic SVs on our sample volvox data. The linked reads display uniquely shows insertion (pink pairs) better than the arc display." src="/img/alignments/read_cloud.png" />
 
 ### Compacting the view of alignments tracks
 
-Users can create a more compact display of alignments using Track menu->Pileup
-settings->Set feature height->Compact
+Enable compact display via Track menu → Pileup settings → Set feature height →
+Compact.
 
-<Figure caption="Compact view of alignments" src="/img/alignments/compact.png" />
+<Figure caption="Track menu → Pileup settings → Set feature height, showing the Normal and Compact options. Compact reduces read height so more reads fit vertically, useful for high-coverage regions or when you only need to see orientation patterns rather than base-level detail." src="/img/alignments/compact.png" />

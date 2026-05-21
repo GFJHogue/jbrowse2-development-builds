@@ -4,29 +4,23 @@ title: URL query parameter API
 toplevel: true
 ---
 
-import Figure from './figure'
-
-JBrowse Web features the ability to automatically provide URL parameters to
-setup a session
+JBrowse Web supports URL parameters for initializing a session.
 
 :::info note
 
-Note: that the embedded components like @jbrowse/react-linear-genome-view make
-no assumptions on how URL parameters are used, so would have to be implemented
-by the consumer of the library
+Embedded components like @jbrowse/react-linear-genome-view2 make no assumptions
+about URL parameters — that logic must be implemented by the consuming
+application.
 
 :::
 
 ## Linear genome view (simple)
 
-We provide a simplified URL format specifically designed for launching a single
-linear genome view
-
-Example
+A simplified URL format for launching a single linear genome view:
 
 `http://host/jbrowse2/?config=test_data/config.json&loc=chr1:6000-7000&assembly=hg19&tracks=gene_track,vcf_track`
 
-Here is a list the allowed query parameters in jbrowse-web
+Allowed query parameters:
 
 ### ?config=
 
@@ -85,9 +79,45 @@ This will create a highlight over the specified region when combined with
 [&assembly=](#assembly) and [&loc=](#loc).
 
 Multiple highlight locations can be specified by delimiting locations with a
-space:
+space (URL-encoded as `%20`):
 
-`&highlight=chr1:6000-7000 chr1:7100-7200`
+`&highlight=chr1:6000-7000%20chr1:7100-7200`
+
+Note: `&assembly=` should always accompany `&highlight=` — the highlight is
+stored with the assembly name so that downstream features (e.g. bookmarking the
+highlighted region from the chip menu) can resolve it. The highlight will still
+render without an assembly in a single-assembly view if the refName matches a
+displayed region, but it is not portable across assemblies and may fail in
+actions that require a fully-qualified region. The same caveat applies when
+authoring `view.highlight` directly in a session JSON: include `assemblyName` on
+each entry.
+
+`view.highlight` entries also accept optional `color` and `label` fields, both
+when authoring a session JSON directly and via the URL by passing a JSON object
+(URL-encoded) instead of a loc string:
+
+```json
+{
+  "refName": "11",
+  "start": 32200274,
+  "end": 32203877,
+  "assemblyName": "mm39",
+  "color": "rgba(240, 128, 128, 0.3)",
+  "label": "R2_intron"
+}
+```
+
+`color` overrides the theme highlight color (used as-is, so explicit alpha is
+preserved). `label` is shown inline next to the chip icon and in the chip
+tooltip. URL form (URL-encode the JSON):
+
+```
+&highlight={"refName":"11","start":32200274,"end":32203877,"color":"rgba(240,128,128,0.3)","label":"R2_intron"}
+```
+
+Multiple JSON highlights can be combined with space delimiters (`%20` after
+URL-encoding), and loc strings and JSON objects can be mixed in the same
+`&highlight=` value.
 
 ### &tracklist=
 
@@ -131,7 +161,7 @@ https://jbrowse.org/code/jb2/main/?config=test_data/volvox/config.json&loc=ctgA:
 
 [Live link](https://jbrowse.org/code/jb2/main/?config=test_data/volvox/config.json&loc=ctgA:1-800&assembly=volvox&tracks=gff3tabix_genes,volvox_filtered_vcf,volvox_microarray,volvox_cram,url_track&sessionTracks=[{"type":"FeatureTrack","trackId":"url_track","name":"URL%20track","assemblyNames":["volvox"],"adapter":{"type":"FromConfigAdapter","features":[{"uniqueId":"one","refName":"ctgA","start":100,"end":200,"name":"Boris"}]}}])
 
-This creates a track dynamically that has a single feature at `chr1:100-200`
+This creates a track dynamically that has a single feature at `ctgA:100-200`
 
 The data to supply to `&sessionTracks=` is an array of track configs, and in the
 above URL, looks like this when pretty-printed
@@ -149,8 +179,8 @@ above URL, looks like this when pretty-printed
         {
           "uniqueId": "one",
           "refName": "ctgA",
-          "start": 190,
-          "end": 191,
+          "start": 100,
+          "end": 200,
           "name": "Boris"
         }
       ]
@@ -208,10 +238,9 @@ Expanded JSON of the contents of the URL
 }
 ```
 
-As you can see, you can supply an array of views (so you can open multiple views
-at once) and can specify the loc, tracks, assembly, and view type, or other view
-specific parameters (different view types may accept different params, e.g.
-dotplot has two assemblies)
+The `views` array accepts multiple views opened simultaneously. Each can specify
+`loc`, `tracks`, `assembly`, and view type. Different view types accept
+different params — dotplot, for example, takes two assemblies.
 
 You can also use `&sessionName=` with session specs to set a custom session
 name:
@@ -304,8 +333,6 @@ Expanded JSON:
 
 ### Circular view
 
-Here is an example of a JSON session spec for a Circular View
-
 ```
 https://jbrowse.org/code/jb2/main/?config=test_data/volvox/config.json&session=spec-{"views":[{"assembly":"volvox","loc":"ctgA:1-5100","type": "CircularView","tracks":["volvox_sv_test"]}]}
 ```
@@ -329,8 +356,7 @@ Expanded
 
 ### Dotplot view
 
-Here is an example of a JSON session spec for a dotplot view (self-vs-self
-alignment)
+Example (self-vs-self alignment):
 
 ```
 https://jbrowse.org/code/jb2/main/?config=test_data/volvox/config_main_thread.json&session=spec-%7B"views":%5B%7B"type":"DotplotView","views":%5B%7B"assembly":"volvox"%7D,%7B"assembly":"volvox"%7D%5D,"tracks":%5B"volvox_fake_synteny"%5D%7D%5D%7D
@@ -338,14 +364,21 @@ https://jbrowse.org/code/jb2/main/?config=test_data/volvox/config_main_thread.js
 
 [Live link](https://jbrowse.org/code/jb2/main/?config=test_data/volvox/config_main_thread.json&session=spec-%7B"views":%5B%7B"type":"DotplotView","views":%5B%7B"assembly":"volvox"%7D,%7B"assembly":"volvox"%7D%5D,"tracks":%5B"volvox_fake_synteny"%5D%7D%5D%7D)
 
-Expanded
+Expanded example, see that it is a self-self alignment
 
 ```json
 {
   "views": [
     {
       "type": "DotplotView",
-      "views": [{ "assembly": "volvox" }, { "assembly": "volvox" }], //  (self vs self alignment)
+      "views": [
+        {
+          "assembly": "volvox"
+        },
+        {
+          "assembly": "volvox"
+        }
+      ],
       "tracks": ["volvox_fake_synteny"]
     }
   ]
@@ -357,8 +390,6 @@ specific regions on the assembly yet, it just navigates to a whole genome
 overview
 
 ### Spreadsheet view
-
-Here is an example of a JSON session spec for a Spreadsheet View
 
 ```
 https://jbrowse.org/code/jb2/main/?config=test_data/volvox/config.json&session=spec-%7B%22views%22:%5B%7B%22type%22:%22SpreadsheetView%22,%20%22uri%22:%22test_data/volvox/volvox.filtered.vcf.gz%22,%22assembly%22:%22volvox%22%7D%5D%7D
@@ -382,8 +413,6 @@ Expanded
 
 ### SV inspector
 
-Here is an example of a JSON session spec for a SV Inspector View
-
 ```
 https://jbrowse.org/code/jb2/main/?config=test_data/volvox/config.json&session=spec-%7B"views":%5B%7B"type":"SvInspectorView","uri":"test_data/volvox/volvox.dup.vcf.gz","assembly":"volvox"%7D%5D%7D
 ```
@@ -392,21 +421,19 @@ https://jbrowse.org/code/jb2/main/?config=test_data/volvox/config.json&session=s
 
 Expanded
 
-```
+```json
 {
-  views: [
+  "views": [
     {
-      type: "SvInspectorView",
-      uri: "test_data/volvox/volvox.dup.vcf.gz",
-      assembly: "volvox",
-    },
-  ],
-};
+      "type": "SvInspectorView",
+      "uri": "test_data/volvox/volvox.dup.vcf.gz",
+      "assembly": "volvox"
+    }
+  ]
+}
 ```
 
 ### Linear synteny view
-
-Here is an example of a JSON session spec for a linear synteny view
 
 ```
 https://jbrowse.org/code/jb2/main/?config=test_data%2Fvolvox%2Fconfig.json&session=spec-{"views":[{"type":"LinearSyntenyView","tracks":["volvox_fake_synteny"],"views":[{"loc":"ctgA:1-30000","assembly":"volvox"},{"loc":"ctgA:1000-31000","assembly":"volvox"}]}]}
@@ -414,17 +441,23 @@ https://jbrowse.org/code/jb2/main/?config=test_data%2Fvolvox%2Fconfig.json&sessi
 
 [Live link](https://jbrowse.org/code/jb2/main/?config=test_data%2Fvolvox%2Fconfig.json&session=spec-{"views":[{"type":"LinearSyntenyView","tracks":["volvox_fake_synteny"],"views":[{"loc":"ctgA:1-30000","assembly":"volvox"},{"loc":"ctgA:1000-31000","assembly":"volvox"}]}]})
 
-Expanded
+Expanded, again showing a self-self alignment is allowed
 
 ```json
 {
   "views": [
     {
       "type": "LinearSyntenyView",
-      "tracks": ["volvox_fake_synteny"], //  (self vs self alignment)
+      "tracks": ["volvox_fake_synteny"],
       "views": [
-        { "loc": "ctgA:1-30000", "assembly": "volvox" },
-        { "loc": "ctgA:1000-31000", "assembly": "volvox" }
+        {
+          "loc": "ctgA:1-30000",
+          "assembly": "volvox"
+        },
+        {
+          "loc": "ctgA:1000-31000",
+          "assembly": "volvox"
+        }
       ]
     }
   ]
@@ -432,8 +465,6 @@ Expanded
 ```
 
 ### Breakpoint split view
-
-Here is an example of a JSON session spec for a breakpoint split view
 
 ```
 https://jbrowse.org/code/jb2/main/?config=test_data/volvox/config.json&session=spec-{"views":[{"type":"BreakpointSplitView","views":[{"loc":"ctgA:1-5000","assembly":"volvox","tracks":["volvox_cram"]},{"loc":"ctgB:1-5000","assembly":"volvox","tracks":["volvox_cram"]}]}]}
@@ -471,27 +502,25 @@ tracks.
 
 ### Linear synteny view (multi-way)
 
-Here is an example of a JSON session spec for a linear synteny view, but with
-more than two views
-
 ```
 https://jbrowse.org/code/jb2/main/?config=test_data%2Fvolvox%2Fconfig.json&session=spec-{"views":[{"type":"LinearSyntenyView","tracks":[["volvox_ins.paf"],["volvox_del.paf"]],"views":[{"loc":"ctgA:1-50000","assembly":"volvox_ins"},{"loc":"ctgA:1000-50000","assembly":"volvox"},{"loc":"ctgA:1000-44000","assembly":"volvox_del"}]}]}
 ```
 
 [Live link](https://jbrowse.org/code/jb2/main/?config=test_data%2Fvolvox%2Fconfig.json&session=spec-{"views":[{"type":"LinearSyntenyView","tracks":[["volvox_ins.paf"],["volvox_del.paf"]],"views":[{"loc":"ctgA:1-50000","assembly":"volvox_ins"},{"loc":"ctgA:1000-50000","assembly":"volvox"},{"loc":"ctgA:1000-44000","assembly":"volvox_del"}]}]})
 
-Expanded
+Expanded (the `tracks` field is a multidimensional array — each sub-array
+corresponds to the synteny tracks at one level of the multi-way view)
 
 ```json
 {
   "views": [
     {
       "type": "LinearSyntenyView",
-      "tracks": [["volvox_ins.paf"],["volvox_del.paf"]], // this multidimensional array refers to the synteny tracks at each level of the multi-level synteny view
+      "tracks": [["volvox_ins.paf"], ["volvox_del.paf"]],
       "views": [
-        { "loc": "ctgA:1-50000", "assembly": "volvox-ins" },
-        { "loc": "ctgA:1000-50000", "assembly": "volvox" }
-        { "loc": "ctgA:1000-44000", "assembly": "volvox-del" }
+        { "loc": "ctgA:1-50000", "assembly": "volvox_ins" },
+        { "loc": "ctgA:1000-50000", "assembly": "volvox" },
+        { "loc": "ctgA:1000-44000", "assembly": "volvox_del" }
       ]
     }
   ]
@@ -559,8 +588,14 @@ https://jbrowse.org/code/jb2/main/?config=test_data/volvox/config.json&session=s
   "layout": {
     "direction": "horizontal",
     "children": [
-      { "views": [0], "size": 70 },
-      { "views": [1], "size": 30 }
+      {
+        "views": [0],
+        "size": 70
+      },
+      {
+        "views": [1],
+        "size": 30
+      }
     ]
   }
 }
@@ -641,10 +676,6 @@ The `layout` parameter:
 
 ## Other session options
 
-Another useful session URL is called a "session spec" or "session
-specification". This provides a way to launch multiple views at once, including
-view types other than the linear genome view
-
 ### &session=json-
 
 Similar to encoded sessions, but more readable, `&session=json-` type sessions
@@ -682,9 +713,11 @@ The local sessions look like this
 
 https://host/jbrowse2/?session=local-Fjphq8kjY
 
-By default, after a session is loaded, it is stored into localStorage, and then
-the URL bar uses the ?session=local- format to reflect the key of the
-localStorage entry.
+By default, after a session is loaded, it is stored into sessionStorage and
+IndexedDB, and then the URL bar uses the ?session=local- format to reflect the
+session ID. Pasting the URL in the same browser tab restores from
+sessionStorage; pasting it into a new tab on the same machine restores from
+IndexedDB.
 
 ### &session=share-
 
@@ -694,4 +727,4 @@ link" that you can give to other users
 https://host/jbrowse2/?session=share-HShsEcnq3i&password=nYzTU
 
 See
-[this FAQ entry for more info about how shared sessions work](/docs/faq/#how-does-the-session-sharing-work-with-shortened-urls-work-in-jbrowse-web)
+[this FAQ entry for more info about how shared sessions work](/docs/faq/#how-does-session-sharing-with-shortened-urls-work-in-jbrowse-web)

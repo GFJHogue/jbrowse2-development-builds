@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import BaseResult, {
   RefSequenceResult,
@@ -41,14 +41,20 @@ const RefNameAutocomplete = observer(function RefNameAutocomplete({
   const { assemblyManager } = session
   const [open, setOpen] = useState(false)
   const [loaded, setLoaded] = useState(true)
-  const [currentSearch, setCurrentSearch] = useState('')
+  // `inputValue` is the displayed text — we mirror whatever MUI emits via
+  // onInputChange (input, reset, blur, etc). `searchQuery` only tracks real
+  // user typing (reason === 'input') so external value-prop syncs don't
+  // clobber an in-flight search.
   const [inputValue, setInputValue] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
   const [searchOptions, setSearchOptions] = useState<Option[]>()
-  const debouncedSearch = useDebounce(currentSearch, 50)
+  const debouncedSearch = useDebounce(searchQuery, 50)
   const assembly = assemblyName ? assemblyManager.get(assemblyName) : undefined
   const { coarseVisibleLocStrings, hasDisplayedRegions } = model
 
-  // this callback runs an async search. the typescript code claims that
+  const fetchResultsRef = useRef(fetchResults)
+  fetchResultsRef.current = fetchResults
+
   useEffect(() => {
     const isCurrent = { cancelled: false }
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -59,7 +65,7 @@ const RefNameAutocomplete = observer(function RefNameAutocomplete({
         }
 
         setLoaded(false)
-        const results = await fetchResults(debouncedSearch)
+        const results = await fetchResultsRef.current(debouncedSearch)
 
         if (!isCurrent.cancelled) {
           setSearchOptions(getDeduplicatedResult(results))
@@ -79,7 +85,7 @@ const RefNameAutocomplete = observer(function RefNameAutocomplete({
     return () => {
       isCurrent.cancelled = true
     }
-  }, [assemblyName, fetchResults, debouncedSearch, session])
+  }, [assemblyName, debouncedSearch, session])
   const inputBoxVal = coarseVisibleLocStrings || value || ''
 
   const regions = assembly?.regions
@@ -117,9 +123,23 @@ const RefNameAutocomplete = observer(function RefNameAutocomplete({
       value={inputBoxVal}
       loading={!loaded}
       inputValue={inputValue}
-      onInputChange={(_event, newInputValue) => {
+      onInputChange={(_event, newInputValue, reason) => {
         setInputValue(newInputValue)
-        onChange?.(newInputValue)
+        if (reason === 'input') {
+          setSearchQuery(newInputValue)
+          onChange?.(newInputValue)
+        } else if (reason === 'selectOption' || reason === 'clear') {
+          // propagate the resolved text to the parent (e.g. ImportForm reads
+          // this back via its `value` state to drive its submit handler)
+          onChange?.(newInputValue)
+          setSearchQuery('')
+        } else if (reason === 'blur') {
+          setSearchQuery('')
+        }
+        // reason === 'reset' fires when the value prop changes externally
+        // (e.g. coarseVisibleLocStrings autorun mid-search); intentionally
+        // skip both onChange and searchQuery reset so the in-flight search
+        // isn't clobbered
       }}
       loadingText="loading results"
       open={open}
@@ -130,7 +150,7 @@ const RefNameAutocomplete = observer(function RefNameAutocomplete({
         setOpen(false)
         setLoaded(true)
         if (hasDisplayedRegions) {
-          setCurrentSearch('')
+          setSearchQuery('')
           setSearchOptions(undefined)
         }
       }}
@@ -153,14 +173,11 @@ const RefNameAutocomplete = observer(function RefNameAutocomplete({
       }}
       options={searchOptions?.length ? searchOptions : regionOptions}
       getOptionDisabled={option => option.group === 'limitOption'}
-      filterOptions={(opts, { inputValue }) => getFiltered(opts, inputValue)}
+      filterOptions={opts => getFiltered(opts, searchQuery)}
       renderInput={params => (
         <AutocompleteTextField
           params={params}
-          inputBoxVal={inputBoxVal}
           TextFieldProps={TextFieldProps}
-          setCurrentSearch={setCurrentSearch}
-          setInputValue={setInputValue}
         />
       )}
       getOptionLabel={opt =>
